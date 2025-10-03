@@ -1,0 +1,221 @@
+﻿@model LessonIndexViewModel
+@{
+    ViewData["Title"] = "Quản lý bài học - " + Model.Course.Title;
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">Quản lý bài học</h1>
+        <p class="text-muted mb-0">
+            Khóa học: <strong>@Model.Course.Title</strong>
+        </p>
+    </div>
+    <div>
+        <a href="@Url.Action("Create", new { courseId = Model.Course.Id })" class="btn btn-primary">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Thêm bài học mới
+        </a>
+        <a href="@Url.Action("Details", "Courses", new { id = Model.Course.Id })" class="btn btn-secondary">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Về khóa học
+        </a>
+    </div>
+</div>
+
+<!-- Course Info Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Thông tin khóa học</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                @if (!string.IsNullOrEmpty(Model.Course.Thumbnail))
+                {
+                    <img src="@Model.Course.Thumbnail" alt="@Model.Course.Title" class="img-fluid rounded">
+                }
+                else
+                {
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 150px;">
+                        <i class="fas fa-image fa-2x text-muted"></i>
+                    </div>
+                }
+            </div>
+            <div class="col-md-9">
+                <p><strong>Giảng viên:</strong> @Model.Course.Instructor.FullName</p>
+                <p><strong>Danh mục:</strong> <span class="badge bg-primary">@Model.Course.Category.Name</span></p>
+                <p><strong>Tổng số bài học:</strong> @Model.Lessons.Count</p>
+                <p><strong>Tổng thời lượng:</strong> @TimeSpan.FromSeconds(Model.Lessons.Sum(l => l.Duration)).ToString(@"hh\:mm\:ss")</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lessons List -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Danh sách bài học (@Model.Lessons.Count bài)
+            </h6>
+            @if (Model.Lessons.Any())
+            {
+                <button type="button" class="btn btn-sm btn-info" id="enableReorder">
+                    <i class="fas fa-sort me-1"></i>Sắp xếp lại
+                </button>
+            }
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Model.Lessons.Any())
+        {
+            <div id="lessonsList" class="list-group">
+                @foreach (var lesson in Model.Lessons)
+                {
+                    <div class="list-group-item" data-lesson-id="@lesson.Id">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="drag-handle me-3" style="cursor: move; display: none;">
+                                        <i class="fas fa-grip-vertical text-muted"></i>
+                                    </span>
+                                    <h5 class="mb-0">
+                                        <span class="badge bg-secondary me-2">Bài @lesson.OrderIndex</span>
+                                        @lesson.Title
+                                    </h5>
+                                </div>
+                                <div class="lesson-meta">
+                                    <span class="badge bg-info me-2">
+                                        <i class="fas fa-clock me-1"></i>
+                                        @TimeSpan.FromSeconds(lesson.Duration).ToString(@"mm\:ss")
+                                    </span>
+                                    @if (lesson.IsPreview)
+                                    {
+                                        <span class="badge bg-success me-2">
+                                            <i class="fas fa-eye me-1"></i>Xem trước
+                                        </span>
+                                    }
+                                    @if (!lesson.IsPublished)
+                                    {
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-eye-slash me-1"></i>Nháp
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Đã xuất bản
+                                        </span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+                                    {
+                                        <span class="badge bg-primary ms-2">
+                                            <i class="fas fa-video me-1"></i>Có video
+                                        </span>
+                                    }
+                                </div>
+                                <p class="mb-0 mt-2 text-muted">@lesson.Content.Substring(0, Math.Min(150, lesson.Content.Length))...</p>
+                            </div>
+                            <div class="btn-group ms-3">
+                                <a href="@Url.Action("Details", new { id = lesson.Id })" class="btn btn-info btn-sm" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="@Url.Action("Edit", new { id = lesson.Id })" class="btn btn-warning btn-sm" title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteLesson('@lesson.Id')" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div id="reorderButtons" class="mt-3" style="display: none;">
+                <button type="button" class="btn btn-success" id="saveOrder">
+                    <i class="fas fa-save me-2"></i>Lưu thứ tự
+                </button>
+                <button type="button" class="btn btn-secondary" id="cancelReorder">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                <h5>Chưa có bài học nào</h5>
+                <p class="text-muted">Nhấn nút "Thêm bài học mới" để tạo bài học đầu tiên.</p>
+                <a href="@Url.Action("Create", new { courseId = Model.Course.Id })" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Thêm bài học mới
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        let sortable = null;
+
+        $('#enableReorder').click(function() {
+            $(this).hide();
+            $('.drag-handle').show();
+            $('#reorderButtons').show();
+
+            // Enable drag and drop
+            const el = document.getElementById('lessonsList');
+            sortable = Sortable.create(el, {
+                handle: '.drag-handle',
+                animation: 150
+            });
+        });
+
+        $('#cancelReorder').click(function() {
+            location.reload();
+        });
+
+        $('#saveOrder').click(function() {
+            const lessonIds = [];
+            $('#lessonsList .list-group-item').each(function() {
+                lessonIds.push($(this).data('lesson-id'));
+            });
+
+            $.post('@Url.Action("Reorder")', {
+                courseId: '@Model.Course.Id',
+                lessonIds: lessonIds
+            })
+            .done(function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    location.reload();
+                } else {
+                    alert('Có lỗi: ' + response.message);
+                }
+            })
+            .fail(function() {
+                alert('Có lỗi xảy ra khi lưu thứ tự');
+            });
+        });
+
+        function deleteLesson(lessonId) {
+            if (confirm('Bạn có chắc muốn xóa bài học này? Hành động này không thể hoàn tác.')) {
+                const form = $('<form>', {
+                    'method': 'POST',
+                    'action': '@Url.Action("Delete")'
+                }).append($('<input>', {
+                    'name': 'id',
+                    'value': lessonId,
+                    'type': 'hidden'
+                })).append($('<input>', {
+                    'name': '__RequestVerificationToken',
+                    'value': $('input[name="__RequestVerificationToken"]').val(),
+                    'type': 'hidden'
+                }));
+
+                $('body').append(form);
+                form.submit();
+            }
+        }
+    </script>
+}

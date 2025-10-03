@@ -1,0 +1,168 @@
+﻿@model LessonCreateEditViewModel
+@{
+    ViewData["Title"] = "Tạo bài học mới";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">Tạo bài học mới</h1>
+        <p class="text-muted mb-0">Khóa học: <strong>@Model.CourseName</strong></p>
+    </div>
+    <a href="@Url.Action("Index", new { courseId = Model.CourseId })" class="btn btn-secondary">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" asp-action="Create">
+            <input type="hidden" asp-for="CourseId" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề bài học..." />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label"></label>
+                        <textarea asp-for="Content" class="form-control" rows="10"
+                                  placeholder="Nhập nội dung bài học...&#10;&#10;Bạn có thể viết:&#10;- Tổng quan bài học&#10;- Các điểm chính&#10;- Bài tập và ghi chú"></textarea>
+                        <span asp-validation-for="Content" class="text-danger"></span>
+                        <small class="text-muted">Nội dung chi tiết về bài học này</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-video me-2 text-primary"></i>Video bài học
+                        </label>
+                        <input type="file" name="video" class="form-control" accept="video/*" id="videoInput" onchange="previewVideo(this)" />
+                        <small class="text-muted">
+                            Hỗ trợ: MP4, WebM, AVI. Dung lượng tối đa: 100MB
+                        </small>
+                        <div id="videoPreview" class="mt-3" style="display: none;">
+                            <video id="previewPlayer" controls style="max-width: 100%; max-height: 300px;">
+                                <source src="" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-md-4">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-cog me-2"></i>Cài đặt bài học
+                            </h6>
+
+                            <div class="mb-3">
+                                <label asp-for="OrderIndex" class="form-label"></label>
+                                <input asp-for="OrderIndex" type="number" class="form-control" min="1" />
+                                <span asp-validation-for="OrderIndex" class="text-danger"></span>
+                                <small class="text-muted">Thứ tự hiển thị trong khóa học</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Duration" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="Duration" type="number" class="form-control" placeholder="600" min="1" />
+                                    <span class="input-group-text">giây</span>
+                                </div>
+                                <span asp-validation-for="Duration" class="text-danger"></span>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Ví dụ: 600 giây = 10 phút
+                                </small>
+                            </div>
+
+                            <hr>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input asp-for="IsPreview" class="form-check-input" />
+                                    <label asp-for="IsPreview" class="form-check-label">
+                                        Cho phép xem trước
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Người dùng có thể xem mà không cần đăng ký
+                                </small>
+                            </div>
+
+                            <div class="mb-0">
+                                <div class="form-check">
+                                    <input asp-for="IsPublished" class="form-check-input" />
+                                    <label asp-for="IsPublished" class="form-check-label">
+                                        Xuất bản ngay
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Bài học sẽ hiển thị cho học viên
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Gợi ý:</strong>
+                        <ul class="mb-0 mt-2 small">
+                            <li>Tiêu đề ngắn gọn, súc tích</li>
+                            <li>Nội dung rõ ràng, dễ hiểu</li>
+                            <li>Video chất lượng HD</li>
+                            <li>Thời lượng phù hợp với nội dung</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="@Url.Action("Index", new { courseId = Model.CourseId })" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save me-2"></i>Tạo bài học
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function previewVideo(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const url = URL.createObjectURL(file);
+
+                $('#previewPlayer').attr('src', url);
+                $('#videoPreview').show();
+
+                // Auto-fill duration when video loads metadata
+                const video = document.getElementById('previewPlayer');
+                video.addEventListener('loadedmetadata', function() {
+                    const duration = Math.floor(video.duration);
+                    $('#Duration').val(duration);
+                });
+            }
+        }
+
+        // Show file name
+        $('#videoInput').change(function() {
+            const fileName = $(this).val().split('\\').pop();
+            if (fileName) {
+                $(this).next('.text-muted').html('<i class="fas fa-check text-success me-1"></i>Đã chọn: ' + fileName);
+            }
+        });
+    </script>
+}

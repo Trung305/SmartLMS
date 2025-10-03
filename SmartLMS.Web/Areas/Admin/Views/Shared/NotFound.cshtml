@@ -1,0 +1,19 @@
+﻿@{
+    ViewData["Title"] = "Không tìm thấy";
+}
+
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 text-center">
+            <i class="fas fa-search fa-5x text-warning mb-4"></i>
+            <h1 class="display-4">404</h1>
+            <h2 class="text-warning">Không tìm thấy trang</h2>
+            <p class="text-muted mt-3">
+                Trang bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
+            </p>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-primary mt-3">
+                <i class="fas fa-home me-2"></i>Về trang chủ
+            </a>
+        </div>
+    </div>
+</div>

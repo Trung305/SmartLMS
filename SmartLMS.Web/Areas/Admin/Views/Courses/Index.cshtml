@@ -1,0 +1,262 @@
+﻿@using SmartLMS.Core.Entities
+@using SmartLMS.Core.Enums
+@using SmartLMS.Web.Areas.Admin.Models
+@model AdminCoursesViewModel
+@{
+    ViewData["Title"] = "Quản lý khóa học";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Quản lý khóa học</h1>
+    <a href="@Url.Action("Create")" class="btn btn-primary">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Thêm khóa học mới
+    </a>
+</div>
+
+<!-- Search and Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Tìm kiếm và lọc</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Tìm kiếm</label>
+                <input type="text" name="search" value="@Model.SearchQuery" class="form-control" placeholder="Tên khóa học, giảng viên...">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Danh mục</label>
+                <select name="category" class="form-select">
+                    <option value="">Tất cả danh mục</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.Id" selected="@(Model.SelectedCategory == category.Id.ToString())">
+                            @category.Name
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Trạng thái</label>
+                <select name="status" class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="published" selected="@(Model.SelectedStatus == "published")">Đã xuất bản</option>
+                    <option value="draft" selected="@(Model.SelectedStatus == "draft")">Nháp</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary d-block w-100">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Courses Table -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Danh sách khóa học (@Model.Courses.TotalCount khóa học)
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (Model.Courses.Items.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Khóa học</th>
+                            <th>Giảng viên</th>
+                            <th>Danh mục</th>
+                            <th>Trạng thái</th>
+                            <th>Học viên</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var course in Model.Courses.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(course.Thumbnail))
+                                        {
+                                            <img src="@course.Thumbnail" alt="@course.Title" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="fas fa-image text-muted"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <h6 class="mb-1">@course.Title</h6>
+                                            <small class="text-muted">
+                                                @if (course.IsFree)
+                                                {
+                                                    <span class="badge bg-success">Miễn phí</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-info">@course.Price.ToString("N0") VNĐ</span>
+                                                }
+                                                <span class="badge bg-secondary ms-1">@course.Level</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        @course.Instructor.FullName
+                                        <br><small class="text-muted">@course.Instructor.Email</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">@course.Category.Name</span>
+                                </td>
+                                <td>
+                                    @if (course.IsPublished)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Đã xuất bản
+                                        </span>
+                                        <br>
+
+                                        <small class="text-muted">@course.PublishedDate?.ToString("dd/MM/yyyy")</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock me-1"></i>Nháp
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="fw-bold">@course.TotalEnrollments</span>
+                                    <br><small class="text-muted">học viên</small>
+                                </td>
+                                <td>
+                                    @course.CreatedDate.ToString("dd/MM/yyyy")
+                                    <br><small class="text-muted">@course.CreatedDate.ToString("HH:mm")</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="@Url.Action("Details", new { id = course.Id })" class="btn btn-info btn-sm" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-warning btn-sm" onclick="togglePublish('@course.Id', @course.IsPublished.ToString().ToLower())" title="Thay đổi trạng thái">
+                                            @if (course.IsPublished)
+                                            {
+                                                <i class="fas fa-eye-slash"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-eye"></i>
+                                            }
+                                        </button>
+                                        @if (course.TotalEnrollments == 0)
+                                        {
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteCourse('@course.Id')" title="Xóa khóa học">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.Courses.TotalPages > 1)
+            {
+                <nav aria-label="Course pagination" class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        @if (Model.Courses.HasPreviousPage)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(Model.Courses.PageNumber - 1)&search=@Model.SearchQuery&category=@Model.SelectedCategory&status=@Model.SelectedStatus">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        }
+
+                        @for (int i = Math.Max(1, Model.Courses.PageNumber - 2); i <= Math.Min(Model.Courses.TotalPages, Model.Courses.PageNumber + 2); i++)
+                        {
+                            <li class="page-item @(i == Model.Courses.PageNumber ? "active" : "")">
+                                <a class="page-link" href="?page=@i&search=@Model.SearchQuery&category=@Model.SelectedCategory&status=@Model.SelectedStatus">@i</a>
+                            </li>
+                        }
+
+                        @if (Model.Courses.HasNextPage)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(Model.Courses.PageNumber + 1)&search=@Model.SearchQuery&category=@Model.SelectedCategory&status=@Model.SelectedStatus">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                <h5>Không tìm thấy khóa học nào</h5>
+                <p class="text-muted">Thử thay đổi điều kiện tìm kiếm hoặc tạo khóa học mới.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function togglePublish(courseId, isPublished) {
+            const action = isPublished ? 'ẩn' : 'xuất bản';
+            if (confirm(`Bạn có chắc muốn ${action} khóa học này?`)) {
+                const form = $('<form>', {
+                    'method': 'POST',
+                    'action': '@Url.Action("TogglePublish")'
+                }).append($('<input>', {
+                    'name': 'id',
+                    'value': courseId,
+                    'type': 'hidden'
+                })).append($('<input>', {
+                    'name': '__RequestVerificationToken',
+                    'value': $('input[name="__RequestVerificationToken"]').val(),
+                    'type': 'hidden'
+                }));
+
+                $('body').append(form);
+                form.submit();
+            }
+        }
+
+        function deleteCourse(courseId) {
+            if (confirm('Bạn có chắc muốn xóa khóa học này? Hành động này không thể hoàn tác.')) {
+                const form = $('<form>', {
+                    'method': 'POST',
+                    'action': '@Url.Action("Delete")'
+                }).append($('<input>', {
+                    'name': 'id',
+                    'value': courseId,
+                    'type': 'hidden'
+                })).append($('<input>', {
+                    'name': '__RequestVerificationToken',
+                    'value': $('input[name="__RequestVerificationToken"]').val(),
+                    'type': 'hidden'
+                }));
+
+                $('body').append(form);
+                form.submit();
+            }
+        }
+    </script>
+}

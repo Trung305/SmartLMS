@@ -1,8 +1,146 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model HomeViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-5 mb-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Học tập trực tuyến với Smart LMS</h1>
+                <p class="lead mb-4">Khám phá hàng nghìn khóa học chất lượng cao từ các giảng viên uy tín. Học mọi lúc, mọi nơi với công nghệ hiện đại.</p>
+                <div class="d-flex gap-3">
+                    <a href="@Url.Action("Index", "Courses")" class="btn btn-light btn-lg">
+                        <i class="fas fa-play me-2"></i>Bắt đầu học ngay
+                    </a>
+                    <a href="@Url.Action("About")" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>Tìm hiểu thêm
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <img src="~/images/hero-image.jpg" alt="Online Learning" class="img-fluid rounded" style="max-height: 400px;" />
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section py-4 bg-light mb-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-6 fw-bold text-primary">@Model.Stats.TotalCourses</h3>
+                    <p class="mb-0">Khóa học</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-6 fw-bold text-primary">@Model.Stats.TotalStudents</h3>
+                    <p class="mb-0">Học viên</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-item">
+                    <h3 class="display-6 fw-bold text-primary">@Model.Stats.TotalInstructors</h3>
+                    <p class="mb-0">Giảng viên</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="categories-section mb-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Danh mục khóa học</h2>
+        <div class="row">
+            @foreach (var category in Model.Categories)
+            {
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <a href="@Url.Action("Index", "Courses", new { categoryId = category.Id })" class="text-decoration-none">
+                        <div class="card h-100 shadow-sm hover-shadow">
+                            <div class="card-body text-center">
+                                <i class="@(category.Icon ?? "fas fa-book") fa-3x text-primary mb-3"></i>
+                                <h5 class="card-title">@category.Name</h5>
+                                <p class="card-text text-muted">@category.Description</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Featured Courses -->
+<section class="featured-courses-section mb-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Khóa học nổi bật</h2>
+            <a href="@Url.Action("Index", "Courses")" class="btn btn-outline-primary">
+                Xem tất cả <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row">
+            @foreach (var course in Model.FeaturedCourses)
+            {
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        @if (!string.IsNullOrEmpty(course.Thumbnail))
+                        {
+                            <img src="@course.Thumbnail" class="card-img-top" alt="@course.Title" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>
+                        }
+                        <div class="card-body d-flex flex-column">
+                            <span class="badge bg-secondary mb-2 align-self-start">@course.Category.Name</span>
+                            <h5 class="card-title">@course.Title</h5>
+                            <p class="card-text flex-grow-1">@course.ShortDescription</p>
+                            <div class="course-meta d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-user me-1"></i>@course.Instructor.FullName
+                                    </small>
+                                </div>
+                                <div>
+                                    @if (course.IsFree)
+                                    {
+                                        <span class="badge bg-success">Miễn phí</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-bold text-primary">@course.Price.ToString("N0") VNĐ</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a href="@Url.Action("Details", "Courses", new { id = course.Id })" class="btn btn-primary w-100">
+                                <i class="fas fa-eye me-2"></i>Xem chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Add hover effects
+        $(document).ready(function() {
+            $('.hover-shadow').hover(
+                function() { $(this).addClass('shadow-lg'); },
+                function() { $(this).removeClass('shadow-lg'); }
+            );
+        });
+    </script>
+}

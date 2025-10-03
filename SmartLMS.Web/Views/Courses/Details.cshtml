@@ -1,0 +1,251 @@
+﻿@model CourseDetailsViewModel
+@{
+    ViewData["Title"] = Model.Course.Title;
+}
+
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("Index")">Khóa học</a></li>
+            <li class="breadcrumb-item active">@Model.Course.Title</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Course Content -->
+        <div class="col-lg-8">
+            <!-- Course Header -->
+            <div class="course-header mb-4">
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge bg-primary">@Model.Course.Category.Name</span>
+                    <span class="badge bg-info">@Model.Course.Level</span>
+                    @if (Model.Course.IsFree)
+                    {
+                        <span class="badge bg-success">Miễn phí</span>
+                    }
+                </div>
+                <h1 class="mb-3">@Model.Course.Title</h1>
+                <p class="lead text-muted">@Model.Course.ShortDescription</p>
+
+                <div class="course-meta d-flex flex-wrap gap-4 mb-3">
+                    <div>
+                        <i class="fas fa-user text-primary me-1"></i>
+                        <strong>Giảng viên:</strong> @Model.Course.Instructor.FullName
+                    </div>
+                    <div>
+                        <i class="fas fa-clock text-primary me-1"></i>
+                        <strong>Thời lượng:</strong> @Model.Course.EstimatedDuration phút
+                    </div>
+                    <div>
+                        <i class="fas fa-users text-primary me-1"></i>
+                        <strong>Học viên:</strong> @Model.Course.TotalEnrollments
+                    </div>
+                    <div>
+                        <i class="fas fa-calendar text-primary me-1"></i>
+                        <strong>Cập nhật:</strong> @Model.Course.CreatedDate.ToString("dd/MM/yyyy")
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Image -->
+            @if (!string.IsNullOrEmpty(Model.Course.Thumbnail))
+            {
+                <div class="mb-4">
+                    <img src="@Model.Course.Thumbnail" alt="@Model.Course.Title" class="img-fluid rounded shadow">
+                </div>
+            }
+
+            <!-- Course Description -->
+            <div class="course-description mb-5">
+                <h3 class="mb-3">Mô tả khóa học</h3>
+                <div class="content">
+                    @Html.Raw(Model.Course.Description.Replace("\n", "<br>"))
+                </div>
+            </div>
+
+            <!-- What You'll Learn -->
+            @if (!string.IsNullOrEmpty(Model.Course.WhatYouWillLearn))
+            {
+                <div class="what-youll-learn mb-5">
+                    <h3 class="mb-3">Bạn sẽ học được gì?</h3>
+                    <div class="bg-light p-4 rounded">
+                        @Html.Raw(Model.Course.WhatYouWillLearn.Replace("\n", "<br>"))
+                    </div>
+                </div>
+            }
+
+            <!-- Requirements -->
+            @if (!string.IsNullOrEmpty(Model.Course.Requirements))
+            {
+                <div class="requirements mb-5">
+                    <h3 class="mb-3">Yêu cầu</h3>
+                    <div class="content">
+                        @Html.Raw(Model.Course.Requirements.Replace("\n", "<br>"))
+                    </div>
+                </div>
+            }
+
+            <!-- Course Content -->
+            <div class="course-content mb-5">
+                <h3 class="mb-3">Nội dung khóa học</h3>
+                <div class="accordion" id="lessonsAccordion">
+                    @for (int i = 0; i < Model.Course.Lessons.Count; i++)
+                    {
+                        var lesson = Model.Course.Lessons.ElementAt(i);
+                        var collapseId = $"lesson{i}";
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button @(i == 0 ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId">
+                                    <div class="d-flex justify-content-between w-100 me-3">
+                                        <span>
+                                            <i class="fas fa-play-circle me-2"></i>
+                                            Bài @(lesson.OrderIndex): @lesson.Title
+                                        </span>
+                                        <span class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            @TimeSpan.FromSeconds(lesson.Duration).ToString(@"mm\:ss")
+                                            @if (lesson.IsPreview)
+                                            {
+                                                <span class="badge bg-info ms-2">Xem trước</span>
+                                            }
+                                        </span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="@collapseId" class="accordion-collapse collapse @(i == 0 ? "show" : "")" data-bs-parent="#lessonsAccordion">
+                                <div class="accordion-body">
+                                    <p>@lesson.Content</p>
+                                    @if (lesson.IsPreview && !string.IsNullOrEmpty(lesson.VideoUrl))
+                                    {
+                                        <a href="#" class="btn btn-sm btn-outline-primary" onclick="playPreview('@lesson.VideoUrl')">
+                                            <i class="fas fa-play me-1"></i>Xem trước
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="course-sidebar sticky-top" style="top: 2rem;">
+                <!-- Enrollment Card -->
+                <div class="card shadow mb-4">
+                    <div class="card-body text-center">
+                        @if (Model.Course.IsFree)
+                        {
+                            <h3 class="text-success mb-3">MIỄN PHÍ</h3>
+                        }
+                        else
+                        {
+                            <h3 class="text-primary mb-3">@Model.Course.Price.ToString("N0") VNĐ</h3>
+                        }
+
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            @if (Model.IsEnrolled)
+                            {
+                                <a href="#" class="btn btn-success btn-lg w-100 mb-3">
+                                    <i class="fas fa-check-circle me-2"></i>Đã đăng ký
+                                </a>
+                                <a href="#" class="btn btn-primary w-100">
+                                    <i class="fas fa-play me-2"></i>Tiếp tục học
+                                </a>
+                            }
+                            else
+                            {
+                                <form method="post" asp-controller="Enrollment" asp-action="Enroll">
+                                    <input type="hidden" name="courseId" value="@Model.Course.Id" />
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                                        <i class="fas fa-shopping-cart me-2"></i>Đăng ký ngay
+                                    </button>
+                                </form>
+                            }
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Login", "Account")" class="btn btn-primary btn-lg w-100 mb-3">
+                                <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập để học
+                            </a>
+                            <p class="small text-muted">Bạn cần đăng nhập để có thể đăng ký khóa học</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Course Info -->
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">Thông tin khóa học</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-play-circle text-primary me-2"></i>
+                                <strong>@Model.Course.TotalLessons</strong> bài học
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                <strong>@Model.Course.EstimatedDuration</strong> phút
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-certificate text-primary me-2"></i>
+                                Cấp độ <strong>@Model.Course.Level</strong>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-users text-primary me-2"></i>
+                                <strong>@Model.Course.TotalEnrollments</strong> học viên
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-mobile-alt text-primary me-2"></i>
+                                Truy cập trên mọi thiết bị
+                            </li>
+                            <li>
+                                <i class="fas fa-infinity text-primary me-2"></i>
+                                Truy cập trọn đời
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Video Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xem trước bài học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <video id="previewVideo" class="w-100" controls>
+                    <source src="" type="video/mp4">
+                    Trình duyệt của bạn không hỗ trợ video.
+                </video>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function playPreview(videoUrl) {
+            const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+            const video = document.getElementById('previewVideo');
+            video.src = videoUrl;
+            modal.show();
+
+            // Pause video when modal is closed
+            document.getElementById('previewModal').addEventListener('hidden.bs.modal', function () {
+                video.pause();
+            });
+        }
+    </script>
+}

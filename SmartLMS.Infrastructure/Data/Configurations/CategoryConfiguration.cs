@@ -30,7 +30,7 @@ namespace SmartLMS.Infrastructure.Data.Configurations
             builder.Property(c => c.CreatedDate)
                 .HasDefaultValueSql("GETUTCDATE()");
 
-            // Index cho tìm kiếm nhanh
+            // Index cho tìm kiếm
             builder.HasIndex(c => c.Name);
             builder.HasIndex(c => c.IsActive);
 

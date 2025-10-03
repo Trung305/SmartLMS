@@ -1,0 +1,200 @@
+﻿@using SmartLMS.Web.Areas.Student.Models
+@model StudentDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Học viên";
+    Layout = "_StudentLayout";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0">Chào mừng trở lại, @Model.Student.FirstName!</h1>
+</div>
+
+<!-- Progress Overview -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Khóa học đã đăng ký</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalEnrollments</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-book-open fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Đã hoàn thành</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.CompletedCourses</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Đang học</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.InProgressCourses</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Tổng thời gian học</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalLearningTime phút</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overall Progress -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Tiến độ học tập tổng thể</h6>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-2" style="height: 25px;">
+                    <div class="progress-bar progress-bar-animated" role="progressbar"
+                         style="width: @Model.OverallProgress.ToString("F1")%"
+                         aria-valuenow="@Model.OverallProgress" aria-valuemin="0" aria-valuemax="100">
+                        @Model.OverallProgress.ToString("F1")%
+                    </div>
+                </div>
+                <small class="text-muted">Tiến độ trung bình của tất cả khóa học</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Continue Learning -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Tiếp tục học</h6>
+                <a href="@Url.Action("MyCourses")" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye fa-sm text-white-50"></i> Xem tất cả
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var enrollment in Model.RecentEnrollments.Where(e => e.Progress < 100).Take(3))
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                @if (!string.IsNullOrEmpty(enrollment.Course.Thumbnail))
+                                {
+                                    <img src="@enrollment.Course.Thumbnail" class="card-img-top" alt="@enrollment.Course.Title" style="height: 150px; object-fit: cover;">
+                                }
+                                else
+                                {
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                        <i class="fas fa-image fa-2x text-muted"></i>
+                                    </div>
+                                }
+                                <div class="card-body">
+                                    <h6 class="card-title">@enrollment.Course.Title</h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar" role="progressbar" style="width: @(enrollment.Progress)%"
+                                             aria-valuenow="@enrollment.Progress" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@enrollment.Progress.ToString("F1")% hoàn thành</small>
+                                    <div class="mt-2">
+                                        <a href="@Url.Action("Course", "Learning", new { id = enrollment.CourseId })" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-play me-1"></i>Tiếp tục
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Hoạt động gần đây</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentActivity.Any())
+                {
+                    <div class="timeline">
+                        @foreach (var activity in Model.RecentActivity.Take(10))
+                        {
+                            <div class="timeline-item mb-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        @if (activity.IsCompleted)
+                                        {
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-play-circle text-primary"></i>
+                                        }
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h6 class="mb-1">@activity.Lesson.Title</h6>
+                                        <p class="mb-1 text-muted">@activity.Lesson.Course.Title</p>
+                                        <small class="text-muted">
+                                            @if (activity.IsCompleted)
+                                            {
+                                                <span>Hoàn thành vào @activity.CompletedDate?.ToString("dd/MM/yyyy HH:mm")</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Xem lần cuối: @activity.LastAccessDate.ToString("dd/MM/yyyy HH:mm")</span>
+                                            }
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">Chưa có hoạt động nào. Hãy bắt đầu học một khóa học!</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -89,6 +89,17 @@ namespace SmartLMS.Infrastructure.Data
                 // Index for completion queries
                 entity.HasIndex(lp => new { lp.EnrollmentId, lp.IsCompleted })
                     .HasDatabaseName("IX_LessonProgress_Completion");
+
+                // QUAN TRỌNG: Đây là nơi fix lỗi
+                entity.HasOne(lp => lp.Enrollment)
+                    .WithMany(e => e.LessonProgress)
+                    .HasForeignKey(lp => lp.EnrollmentId)
+                    .OnDelete(DeleteBehavior.Cascade); // CASCADE cho Enrollment
+
+                entity.HasOne(lp => lp.Lesson)
+                    .WithMany(l => l.LessonProgress)
+                    .HasForeignKey(lp => lp.LessonId)
+                    .OnDelete(DeleteBehavior.Restrict); // RESTRICT cho Lesson ← FIX TẠI ĐÂY
             });
         }
 

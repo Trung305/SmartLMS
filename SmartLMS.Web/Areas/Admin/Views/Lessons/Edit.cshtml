@@ -1,0 +1,265 @@
+﻿@model LessonCreateEditViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa bài học - " + Model.Title;
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">Chỉnh sửa bài học</h1>
+        <p class="text-muted mb-0">Khóa học: <strong>@Model.CourseName</strong></p>
+    </div>
+    <div>
+        <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-info">
+            <i class="fas fa-eye fa-sm text-white-50"></i> Xem chi tiết
+        </a>
+        <a href="@Url.Action("Index", new { courseId = Model.CourseId })" class="btn btn-secondary">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" asp-action="Edit">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CourseId" />
+            <input type="hidden" asp-for="CurrentVideoUrl" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label"></label>
+                        <textarea asp-for="Content" class="form-control" rows="10"></textarea>
+                        <span asp-validation-for="Content" class="text-danger"></span>
+                        <small class="text-muted">Nội dung chi tiết về bài học này</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-video me-2 text-primary"></i>Video bài học
+                        </label>
+
+                        @if (!string.IsNullOrEmpty(Model.CurrentVideoUrl))
+                        {
+                            <div class="mb-3 border rounded p-3 bg-light">
+                                <h6 class="mb-2">
+                                    <i class="fas fa-film me-2 text-success"></i>Video hiện tại:
+                                </h6>
+                                <video controls style="max-width: 100%; max-height: 300px;">
+                                    <source src="@Model.CurrentVideoUrl" type="video/mp4">
+                                    Trình duyệt không hỗ trợ video.
+                                </video>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Bài học này chưa có video. Upload video mới bên dưới.
+                            </div>
+                        }
+
+                        <input type="file" name="video" class="form-control" accept="video/*" id="videoInput" onchange="previewNewVideo(this)" />
+                        <small class="text-muted">
+                            Tải lên video mới để thay thế. Hỗ trợ: MP4, WebM, AVI. Max: 100MB
+                        </small>
+
+                        <div id="newVideoPreview" class="mt-3" style="display: none;">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Video mới được chọn:</strong>
+                            </div>
+                            <video id="newPreviewPlayer" controls style="max-width: 100%; max-height: 300px;">
+                                <source src="" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-md-4">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-cog me-2"></i>Cài đặt bài học
+                            </h6>
+
+                            <div class="mb-3">
+                                <label asp-for="OrderIndex" class="form-label"></label>
+                                <input asp-for="OrderIndex" type="number" class="form-control" min="1" />
+                                <span asp-validation-for="OrderIndex" class="text-danger"></span>
+                                <small class="text-muted">Thứ tự hiển thị trong khóa học</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Duration" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="Duration" type="number" class="form-control" min="1" />
+                                    <span class="input-group-text">giây</span>
+                                </div>
+                                <span asp-validation-for="Duration" class="text-danger"></span>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Hiện tại: @TimeSpan.FromSeconds(Model.Duration).ToString(@"mm\:ss")
+                                </small>
+                            </div>
+
+                            <hr>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input asp-for="IsPreview" class="form-check-input" />
+                                    <label asp-for="IsPreview" class="form-check-label">
+                                        Cho phép xem trước
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Người dùng có thể xem mà không cần đăng ký
+                                </small>
+                            </div>
+
+                            <div class="mb-0">
+                                <div class="form-check">
+                                    <input asp-for="IsPublished" class="form-check-input" />
+                                    <label asp-for="IsPublished" class="form-check-label">
+                                        Xuất bản
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Bài học sẽ hiển thị cho học viên
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-warning mb-3">
+                        <div class="card-body">
+                            <h6 class="text-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Lưu ý
+                            </h6>
+                            <p class="small mb-0">
+                                Nếu upload video mới, video cũ sẽ bị xóa và không thể khôi phục.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6>
+                                <i class="fas fa-chart-line me-2"></i>Thống kê
+                            </h6>
+                            <p class="small mb-1">
+                                <strong>Ngày tạo:</strong><br>
+                                Đang cập nhật...
+                            </p>
+                            <p class="small mb-0">
+                                <strong>Lượt xem:</strong><br>
+                                Đang cập nhật...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save me-2"></i>Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Video Modal -->
+<div class="modal fade" id="deleteVideoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2"></i>Xác nhận xóa video
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc muốn xóa video hiện tại?</p>
+                <p class="text-danger mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Hành động này không thể hoàn tác!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger">Xóa video</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function previewNewVideo(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const url = URL.createObjectURL(file);
+
+                $('#newPreviewPlayer').attr('src', url);
+                $('#newVideoPreview').show();
+
+                // Auto-update duration when new video loads
+                const video = document.getElementById('newPreviewPlayer');
+                video.addEventListener('loadedmetadata', function() {
+                    const duration = Math.floor(video.duration);
+                    $('#Duration').val(duration);
+
+                    // Show duration info
+                    const timeStr = Math.floor(duration / 60) + ':' + (duration % 60).toString().padStart(2, '0');
+                    $('.text-muted:contains("Hiện tại")').html(
+                        '<i class="fas fa-check text-success me-1"></i>Video mới: ' + timeStr
+                    );
+                });
+            }
+        }
+
+        // Show file name when selected
+        $('#videoInput').change(function() {
+            const fileName = $(this).val().split('\\').pop();
+            if (fileName) {
+                $(this).next('.text-muted').html(
+                    '<i class="fas fa-check text-success me-1"></i>Đã chọn video mới: <strong>' + fileName + '</strong>'
+                );
+            }
+        });
+
+        // Confirm before leaving if video selected
+        let videoSelected = false;
+        $('#videoInput').change(function() {
+            videoSelected = $(this).val() !== '';
+        });
+
+        $(window).on('beforeunload', function() {
+            if (videoSelected) {
+                return 'Bạn đã chọn video mới nhưng chưa lưu. Bạn có chắc muốn rời khỏi trang?';
+            }
+        });
+
+        $('form').submit(function() {
+            videoSelected = false; // Disable warning when submitting
+        });
+    </script>
+}

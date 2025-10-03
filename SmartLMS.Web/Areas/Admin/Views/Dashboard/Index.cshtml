@@ -1,0 +1,214 @@
+﻿@using SmartLMS.Core.Enums
+@using SmartLMS.Web.Areas.Admin.Models
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Quản trị";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tổng khóa học</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalCourses</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-book fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Tổng người dùng</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsers</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tổng đăng ký</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalEnrollments</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Người dùng hoạt động</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalActiveUsers</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Thống kê đăng ký theo tháng</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="enrollmentChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Khóa học mới nhất</h6>
+            </div>
+            <div class="card-body">
+                @foreach (var course in Model.RecentCourses.Take(5))
+                {
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="mr-3">
+                            @if (!string.IsNullOrEmpty(course.Thumbnail))
+                            {
+                                <img src="@course.Thumbnail" alt="@course.Title" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">@course.Title</h6>
+                            <small class="text-muted">@course.Instructor.FullName - @course.CreatedDate.ToString("dd/MM/yyyy")</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Enrollments -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Đăng ký gần đây</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Học viên</th>
+                                <th>Khóa học</th>
+                                <th>Ngày đăng ký</th>
+                                <th>Tiến độ</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var enrollment in Model.RecentEnrollments)
+                            {
+                                <tr>
+                                    <td>@enrollment.Student.FullName</td>
+                                    <td>@enrollment.Course.Title</td>
+                                    <td>@enrollment.EnrollmentDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar" style="width: @(enrollment.Progress)%"
+                                                 aria-valuenow="@enrollment.Progress" aria-valuemin="0" aria-valuemax="100">
+                                                @enrollment.Progress.ToString("F1")%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (enrollment.Status == EnrollmentStatus.Active)
+                                        {
+                                            <span class="badge badge-success">Hoạt động</span>
+                                        }
+                                        else if (enrollment.Status == EnrollmentStatus.Completed)
+                                        {
+                                            <span class="badge badge-primary">Hoàn thành</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-secondary">@enrollment.Status</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Load chart data
+        fetch('@Url.Action("GetChartData")')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('enrollmentChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Số lượng đăng ký',
+                            data: data.enrollments,
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+    </script>
+}

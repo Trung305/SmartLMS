@@ -1,0 +1,173 @@
+﻿@model CourseIndexViewModel
+@{
+    ViewData["Title"] = "Khóa học";
+}
+
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="mb-3">Khóa học</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Home")">Trang chủ</a></li>
+                    <li class="breadcrumb-item active">Khóa học</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Bộ lọc</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <label class="form-label">Tìm kiếm</label>
+                            <input type="text" name="search" value="@Model.SearchQuery" class="form-control" placeholder="Nhập từ khóa..." />
+                        </div>
+
+                        <!-- Categories -->
+                        <div class="mb-3">
+                            <label class="form-label">Danh mục</label>
+                            <select name="categoryId" class="form-select">
+                                <option value="">Tất cả danh mục</option>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category.Id" selected="@(Model.SelectedCategoryId == category.Id)">
+                                        @category.Name
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Levels -->
+                        <div class="mb-3">
+                            <label class="form-label">Cấp độ</label>
+                            <select name="level" class="form-select">
+                                <option value="">Tất cả cấp độ</option>
+                                <option value="Beginner" selected="@(Model.SelectedLevel == "Beginner")">Cơ bản</option>
+                                <option value="Intermediate" selected="@(Model.SelectedLevel == "Intermediate")">Trung cấp</option>
+                                <option value="Advanced" selected="@(Model.SelectedLevel == "Advanced")">Nâng cao</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i>Tìm kiếm
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Courses List -->
+        <div class="col-lg-9">
+            <!-- Results Info -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <p class="mb-0">Hiển thị @Model.Courses.Items.Count trên tổng số @Model.Courses.TotalCount khóa học</p>
+            </div>
+
+            <!-- Courses Grid -->
+            <div class="row">
+                @foreach (var course in Model.Courses.Items)
+                {
+                    <div class="col-md-6 col-xl-4 mb-4">
+                        <div class="card h-100 shadow-sm hover-shadow">
+                            @if (!string.IsNullOrEmpty(course.Thumbnail))
+                            {
+                                <img src="@course.Thumbnail" class="card-img-top" alt="@course.Title" style="height: 200px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-image fa-2x text-muted"></i>
+                                </div>
+                            }
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge bg-secondary">@course.Category.Name</span>
+                                    <span class="badge bg-info">@course.Level</span>
+                                </div>
+                                <h5 class="card-title">@course.Title</h5>
+                                <p class="card-text flex-grow-1">@course.ShortDescription</p>
+
+                                <div class="course-meta mb-3">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-user me-1"></i>@course.Instructor.FullName
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-clock me-1"></i>@course.EstimatedDuration phút
+                                    </small>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    @if (course.IsFree)
+                                    {
+                                        <span class="badge bg-success fs-6">Miễn phí</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-bold text-primary">@course.Price.ToString("N0") VNĐ</span>
+                                    }
+                                    <a href="@Url.Action("Details", new { id = course.Id })" class="btn btn-outline-primary btn-sm">
+                                        Chi tiết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.Courses.TotalPages > 1)
+            {
+                <nav aria-label="Course pagination">
+                    <ul class="pagination justify-content-center">
+                        @if (Model.Courses.HasPreviousPage)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(Model.Courses.PageNumber - 1)&categoryId=@Model.SelectedCategoryId&level=@Model.SelectedLevel&search=@Model.SearchQuery">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        }
+
+                        @for (int i = Math.Max(1, Model.Courses.PageNumber - 2); i <= Math.Min(Model.Courses.TotalPages, Model.Courses.PageNumber + 2); i++)
+                        {
+                            <li class="page-item @(i == Model.Courses.PageNumber ? "active" : "")">
+                                <a class="page-link" href="?page=@i&categoryId=@Model.SelectedCategoryId&level=@Model.SelectedLevel&search=@Model.SearchQuery">@i</a>
+                            </li>
+                        }
+
+                        @if (Model.Courses.HasNextPage)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(Model.Courses.PageNumber + 1)&categoryId=@Model.SelectedCategoryId&level=@Model.SelectedLevel&search=@Model.SearchQuery">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Add hover effects
+        $(document).ready(function() {
+            $('.hover-shadow').hover(
+                function() { $(this).addClass('shadow-lg'); },
+                function() { $(this).removeClass('shadow-lg'); }
+            );
+        });
+    </script>
+}

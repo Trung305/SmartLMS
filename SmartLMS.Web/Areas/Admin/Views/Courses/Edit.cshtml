@@ -1,0 +1,181 @@
+﻿@model CourseCreateEditViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa khóa học - " + Model.Title;
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Chỉnh sửa khóa học</h1>
+    <div>
+        <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-info">
+            <i class="fas fa-eye fa-sm text-white-50"></i> Xem chi tiết
+        </a>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" asp-action="Edit">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="CurrentThumbnail" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ShortDescription" class="form-label"></label>
+                        <textarea asp-for="ShortDescription" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="ShortDescription" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="8"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="WhatYouWillLearn" class="form-label"></label>
+                        <textarea asp-for="WhatYouWillLearn" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="WhatYouWillLearn" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Requirements" class="form-label"></label>
+                        <textarea asp-for="Requirements" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Requirements" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" class="form-select">
+                            <option value="">-- Chọn danh mục --</option>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <option value="@category.Id" selected="@(Model.CategoryId == category.Id)">
+                                    @category.Name
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="InstructorId" class="form-label"></label>
+                        <select asp-for="InstructorId" class="form-select">
+                            <option value="">-- Chọn giảng viên --</option>
+                            @foreach (var instructor in Model.Instructors)
+                            {
+                                <option value="@instructor.Id" selected="@(Model.InstructorId == instructor.Id)">
+                                    @instructor.FullName
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="InstructorId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Level" class="form-label"></label>
+                        <select asp-for="Level" class="form-select">
+                            <option value="@CourseLevel.Beginner" selected="@(Model.Level == CourseLevel.Beginner)">Cơ bản</option>
+                            <option value="@CourseLevel.Intermediate" selected="@(Model.Level == CourseLevel.Intermediate)">Trung cấp</option>
+                            <option value="@CourseLevel.Advanced" selected="@(Model.Level == CourseLevel.Advanced)">Nâng cao</option>
+                        </select>
+                        <span asp-validation-for="Level" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="EstimatedDuration" class="form-label"></label>
+                        <input asp-for="EstimatedDuration" type="number" class="form-control" />
+                        <span asp-validation-for="EstimatedDuration" class="text-danger"></span>
+                        <small class="text-muted">Tổng thời lượng của tất cả bài học</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="IsFree" class="form-check-input" />
+                            <label asp-for="IsFree" class="form-check-label"></label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="priceInput">
+                        <label asp-for="Price" class="form-label"></label>
+                        <input asp-for="Price" type="number" class="form-control" />
+                        <span asp-validation-for="Price" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Hình đại diện</label>
+                        @if (!string.IsNullOrEmpty(Model.CurrentThumbnail))
+                        {
+                            <div class="mb-2">
+                                <img src="@Model.CurrentThumbnail" class="img-fluid rounded" style="max-height: 200px;" />
+                                <p class="small text-muted mt-1">Hình ảnh hiện tại</p>
+                            </div>
+                        }
+                        <input type="file" name="thumbnail" class="form-control" accept="image/*" onchange="previewImage(this)" />
+                        <small class="text-muted">Tải lên ảnh mới để thay thế</small>
+                        <div id="thumbnailPreview" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between">
+                <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Toggle price input
+        $('#IsFree').change(function() {
+            if ($(this).is(':checked')) {
+                $('#priceInput').hide();
+                $('#Price').val(0);
+            } else {
+                $('#priceInput').show();
+            }
+        });
+
+        // Initialize
+        if ($('#IsFree').is(':checked')) {
+            $('#priceInput').hide();
+        }
+
+        // Preview new thumbnail
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#thumbnailPreview').html('<p class="small text-success">Ảnh mới:</p><img src="' + e.target.result + '" class="img-fluid rounded" style="max-height: 200px;">');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}

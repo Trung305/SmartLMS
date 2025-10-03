@@ -1,0 +1,283 @@
+﻿@using SmartLMS.Core.Enums
+@using SmartLMS.Web.Areas.Admin.Models
+@model AdminUserDetailsViewModel
+@{
+    ViewData["Title"] = "Chi tiết người dùng - " + Model.UserWithRoles.User.FullName;
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Chi tiết người dùng</h1>
+    <div>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
+        </a>
+        <form method="post" asp-action="ToggleActive" class="d-inline">
+            <input type="hidden" name="id" value="@Model.UserWithRoles.User.Id" />
+            @if (Model.UserWithRoles.User.IsActive)
+            {
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-ban fa-sm text-white-50"></i> Vô hiệu hóa
+                </button>
+            }
+            else
+            {
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check fa-sm text-white-50"></i> Kích hoạt
+                </button>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <!-- User Profile Card -->
+        <div class="card shadow mb-4">
+            <div class="card-body text-center">
+                <div class="bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; font-size: 2rem;">
+                    @Model.UserWithRoles.User.FirstName.Substring(0, 1)@Model.UserWithRoles.User.LastName.Substring(0, 1)
+                </div>
+                <h4 class="mb-1">@Model.UserWithRoles.User.FullName</h4>
+                <p class="text-muted mb-3">@Model.UserWithRoles.User.Email</p>
+
+                <div class="mb-3">
+                    @foreach (var role in Model.UserWithRoles.Roles)
+                    {
+                        <span class="badge bg-@(GetRoleBadgeClass(role)) me-1">@role</span>
+                    }
+                </div>
+
+                @if (Model.UserWithRoles.User.IsActive)
+                {
+                    <span class="badge bg-success fs-6">
+                        <i class="fas fa-check me-1"></i>Đang hoạt động
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-danger fs-6">
+                        <i class="fas fa-ban me-1"></i>Ngừng hoạt động
+                    </span>
+                }
+            </div>
+        </div>
+
+        <!-- Role Management -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Quản lý vai trò</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-action="ChangeRole">
+                    <input type="hidden" name="id" value="@Model.UserWithRoles.User.Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Chọn vai trò mới:</label>
+                        <select name="newRole" class="form-select">
+                            <option value="">-- Chọn vai trò --</option>
+                            @foreach (var role in Model.AvailableRoles)
+                            {
+                                <option value="@role" selected="@Model.UserWithRoles.Roles.Contains(role)">
+                                    @role
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-user-tag me-2"></i>Cập nhật vai trò
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- User Info -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Thông tin tài khoản</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td><strong>Username:</strong></td>
+                        <td>@Model.UserWithRoles.User.UserName</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td>
+                            @Model.UserWithRoles.User.Email
+                            @if (Model.UserWithRoles.User.EmailConfirmed)
+                            {
+                                <i class="fas fa-check-circle text-success ms-1"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-exclamation-circle text-warning ms-1"></i>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ngày tham gia:</strong></td>
+                        <td>@Model.UserWithRoles.User.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lần đăng nhập cuối:</strong></td>
+                        <td>
+                            @if (Model.UserWithRoles.User.LastLoginDate.HasValue)
+                            {
+                                @Model.UserWithRoles.User.LastLoginDate.Value.ToString("dd/MM/yyyy HH:mm")
+                            }
+                            else
+                            {
+                                <span class="text-muted">Chưa đăng nhập</span>
+                            }
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        @if (Model.UserWithRoles.Roles.Contains("Student") && Model.RecentEnrollments != null)
+        {
+            <!-- Student Enrollments -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Khóa học đã đăng ký (@Model.RecentEnrollments.Count)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentEnrollments.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Khóa học</th>
+                                        <th>Tiến độ</th>
+                                        <th>Ngày đăng ký</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var enrollment in Model.RecentEnrollments)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <h6 class="mb-1">@enrollment.Course?.Title</h6>
+                                                <small class="text-muted">@enrollment.Course?.Category.Name</small>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar" role="progressbar" style="width: @(enrollment.Progress)%"
+                                                         aria-valuenow="@enrollment.Progress" aria-valuemin="0" aria-valuemax="100">
+                                                        @enrollment.Progress.ToString("F1")%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@enrollment.EnrollmentDate.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                @if (enrollment.Status == EnrollmentStatus.Active)
+                                                {
+                                                    <span class="badge bg-success">Đang học</span>
+                                                }
+                                                else if (enrollment.Status == EnrollmentStatus.Completed)
+                                                {
+                                                    <span class="badge bg-primary">Hoàn thành</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">@enrollment.Status</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-book fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">Chưa đăng ký khóa học nào</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.UserWithRoles.Roles.Contains("Instructor") && Model.CreatedCourses != null)
+        {
+            <!-- Instructor Courses -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Khóa học đã tạo (@Model.CreatedCourses.Count)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.CreatedCourses.Any())
+                    {
+                        <div class="row">
+                            @foreach (var course in Model.CreatedCourses)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        @if (!string.IsNullOrEmpty(course.Thumbnail))
+                                        {
+                                            <img src="@course.Thumbnail" class="card-img-top" alt="@course.Title" style="height: 150px; object-fit: cover;">
+                                        }
+                                        else
+                                        {
+                                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                                <i class="fas fa-image fa-2x text-muted"></i>
+                                            </div>
+                                        }
+                                        <div class="card-body">
+                                            <h6 class="card-title">@course.Title</h6>
+                                            <p class="card-text small text-muted">@course.ShortDescription</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    @if (course.IsPublished)
+                                                    {
+                                                        <span class="badge bg-success">Xuất bản</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning">Nháp</span>
+                                                    }
+                                                </div>
+                                                <small class="text-muted">@course.TotalEnrollments học viên</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-chalkboard-teacher fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">Chưa tạo khóa học nào</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    public string GetRoleBadgeClass(string role)
+    {
+        return role switch
+        {
+            "Admin" => "danger",
+            "Instructor" => "warning",
+            "Student" => "primary",
+            _ => "secondary"
+        };
+    }
+}
