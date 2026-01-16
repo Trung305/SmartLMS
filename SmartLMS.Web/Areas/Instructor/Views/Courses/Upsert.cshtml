@@ -1,0 +1,147 @@
+﻿@using SmartLMS.Web.Areas.Instructor.Models
+@model InsructorCourseUpsertViewModel
+
+<div class="container-fluid p-0">
+    <form method="post" asp-action="Upsert" enctype="multipart/form-data" id="upsertCourseForm" novalidate>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="validationSummary">
+            <i class="fas fa-exclamation-circle me-2"></i>Vui lòng kiểm tra các lỗi bên dưới
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <input asp-for="Id" type="hidden" />
+
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-md-8">
+                <div class="mb-3 position-relative">
+                    <label asp-for="Title" class="form-label">Tiêu đề khóa học</label>
+                    <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề khóa học" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3 position-relative">
+                    <label asp-for="ShortDescription" class="form-label">Mô tả ngắn</label>
+                    <textarea asp-for="ShortDescription" class="form-control" rows="3" placeholder="Mô tả ngắn về khóa học"></textarea>
+                    <span asp-validation-for="ShortDescription" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3 position-relative">
+                    <label asp-for="Description" class="form-label">Mô tả chi tiết</label>
+                    <textarea asp-for="Description" class="form-control" rows="8" placeholder="Mô tả chi tiết về khóa học"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3 position-relative">
+                    <label asp-for="WhatYouWillLearn" class="form-label">Bạn sẽ học được gì</label>
+                    <textarea asp-for="WhatYouWillLearn" class="form-control" rows="5" placeholder="- Kỹ năng 1&#10;- Kỹ năng 2"></textarea>
+                    <span asp-validation-for="WhatYouWillLearn" class="text-danger"></span>
+                    <small class="text-muted">Mỗi dòng là một mục, bắt đầu bằng "-". Ví dụ: "- Kỹ năng 1"</small>
+                </div>
+
+                <div class="mb-3 position-relative">
+                    <label asp-for="Requirements" class="form-label">Yêu cầu đầu vào</label>
+                    <textarea asp-for="Requirements" class="form-control" rows="4" placeholder="Yêu cầu đầu vào"></textarea>
+                    <span asp-validation-for="Requirements" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="">-- Chọn danh mục --</option>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Level" class="form-label">Cấp độ</label>
+                    <select asp-for="Level" class="form-select">
+                        <option value="@CourseLevel.Beginner">Cơ bản</option>
+                        <option value="@CourseLevel.Intermediate">Trung cấp</option>
+                        <option value="@CourseLevel.Advanced">Nâng cao</option>
+                    </select>
+                    <span asp-validation-for="Level" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input asp-for="IsFree" class="form-check-input" id="isFree" />
+                        <label asp-for="IsFree" class="form-check-label">Miễn phí</label>
+                    </div>
+                </div>
+
+                <div class="mb-3 position-relative" id="priceInput">
+                    <label asp-for="Price" class="form-label">Giá (VNĐ)</label>
+                    <input asp-for="Price" type="number" class="form-control" placeholder="0" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Hình đại diện</label>
+                    @if (!string.IsNullOrEmpty(Model.CurrentThumbnail))
+                    {
+                        <div class="mb-2">
+                            <img src="@Model.CurrentThumbnail" class="img-fluid rounded" style="max-height: 150px;" alt="Current thumbnail" />
+                            <input type="hidden" asp-for="CurrentThumbnail" />
+                            <span asp-validation-for="CurrentThumbnail" class="text-danger"></span>
+                        </div>
+                    }
+                    <div class="input-group">
+                        <input type="file" name="ThumbnailFile" class="form-control" accept="image/*" id="ThumbnailFile" />
+                    </div>
+                    <small class="text-muted">Khuyến nghị: 800x600px, JPG/PNG</small>
+                    <div id="thumbnailPreview" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <i class="fas fa-times me-2"></i>Hủy
+            </button>
+            <button type="submit" class="btn btn-custom" id="submitBtn">
+                <i class="fas fa-save me-2"></i><span id="btnText"> @((Model?.Id != Guid.Empty) ? "Cập nhật" : "Tạo khóa học")</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+
+    .text-danger {
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: block;
+    }
+
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select {
+        background: #4a5568;
+        color: #e5e7eb;
+        border-color: #6b7280;
+    }
+
+    #thumbnailPreview img {
+        max-height: 200px;
+        border-radius: 8px;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

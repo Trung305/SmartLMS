@@ -7,8 +7,8 @@ public class AdminCoursesViewModel
 {
     public PagedResult<Course> Courses { get; set; } = new();
     public string? SearchQuery { get; set; }
-    public string? SelectedCategory { get; set; }
-    public string? SelectedStatus { get; set; }
+    public int? SelectedCategory { get; set; }
+    public int? SelectedStatus { get; set; }
     public IList<Category> Categories { get; set; } = new List<Category>();
 }
 

@@ -17,16 +17,12 @@ namespace SmartLMS.Infrastructure.Data
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole<Guid>> roleManager)
         {
-            // Tạo database nếu chưa tồn tại
             await context.Database.EnsureCreatedAsync();
 
-            // Seed roles nếu chưa có
             await SeedRolesAsync(roleManager);
 
-            // Seed users nếu chưa có
             await SeedUsersAsync(userManager);
 
-            // Seed sample courses
             await SeedCoursesAsync(context, userManager);
 
             await context.SaveChangesAsync();
@@ -52,7 +48,6 @@ namespace SmartLMS.Infrastructure.Data
 
         private static async Task SeedUsersAsync(UserManager<ApplicationUser> userManager)
         {
-            // Admin user
             if (await userManager.FindByEmailAsync("admin@smartlms.com") == null)
             {
                 var admin = new ApplicationUser
@@ -73,7 +68,6 @@ namespace SmartLMS.Infrastructure.Data
                 }
             }
 
-            // Instructor user
             if (await userManager.FindByEmailAsync("instructor@smartlms.com") == null)
             {
                 var instructor = new ApplicationUser
@@ -94,7 +88,6 @@ namespace SmartLMS.Infrastructure.Data
                 }
             }
 
-            // Student user
             if (await userManager.FindByEmailAsync("student@smartlms.com") == null)
             {
                 var student = new ApplicationUser
@@ -137,9 +130,6 @@ namespace SmartLMS.Infrastructure.Data
                 Level = CourseLevel.Beginner,
                 CategoryId = 1,
                 InstructorId = instructor.Id,
-                IsPublished = true,
-                PublishedDate = DateTime.UtcNow,
-                EstimatedDuration = 720 // 12 hours
             },
             new Course
             {
@@ -152,9 +142,6 @@ namespace SmartLMS.Infrastructure.Data
                 Level = CourseLevel.Intermediate,
                 CategoryId = 1,
                 InstructorId = instructor.Id,
-                IsPublished = true,
-                PublishedDate = DateTime.UtcNow,
-                EstimatedDuration = 600 // 10 hours
             }
         };
 

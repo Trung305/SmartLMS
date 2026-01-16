@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SmartLMS.Core.Enums;
 using SmartLMS.Infrastructure.Data;
 using SmartLMS.Web.Models.ViewModels;
 
@@ -21,10 +22,10 @@ public class HomeController : Controller
         var viewModel = new HomeViewModel
         {
             FeaturedCourses = await _context.Courses
-                .Where(c => c.IsPublished)
+                .Where(c => c.Status == CourseStatus.Published)
                 .Include(c => c.Category)
                 .Include(c => c.Instructor)
-                .OrderByDescending(c => c.CreatedDate)
+                .OrderByDescending(c => c.CreatedAt)
                 .Take(6)
                 .ToListAsync(),
 
@@ -35,7 +36,7 @@ public class HomeController : Controller
 
             Stats = new HomeStatsViewModel
             {
-                TotalCourses = await _context.Courses.CountAsync(c => c.IsPublished),
+                TotalCourses = await _context.Courses.CountAsync(c => c.Status == CourseStatus.Published),
                 TotalStudents = await _context.Users.CountAsync(),
                 TotalInstructors = await _context.UserRoles
                     .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur, r })

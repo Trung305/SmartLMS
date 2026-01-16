@@ -17,6 +17,7 @@ namespace SmartLMS.Core.Entities
         public int MaxAttempts { get; set; } = 3;              // Số lần làm tối đa
         public decimal PassingScore { get; set; } = 70;        // Điểm đậu
         public bool IsActive { get; set; } = true;
+        public bool IsTimedQuiz { get; set; } = false;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

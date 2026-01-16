@@ -6,174 +6,174 @@
     Layout = "_AdminLayout";
 }
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-</div>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-primary"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h1>
+        <a href="#" class="btn btn-custom"><i class="fas fa-sync-alt me-2"></i>Cập nhật dữ liệu</a>
+    </div>
 
-<!-- Stats Cards -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Tổng khóa học</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalCourses</div>
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card admin-card h-100 shadow-sm border-0" data-aos="fade-up">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-book fa-3x text-primary"></i>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-book fa-2x text-gray-300"></i>
+                    <div>
+                        <div class="text-uppercase text-muted small">Tổng khóa học</div>
+                        <h4 class="mb-0 text-dark">@Model.TotalCourses</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card admin-card h-100 shadow-sm border-0" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-users fa-3x text-success"></i>
+                    </div>
+                    <div>
+                        <div class="text-uppercase text-muted small">Tổng người dùng</div>
+                        <h4 class="mb-0 text-dark">@Model.TotalUsers</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card admin-card h-100 shadow-sm border-0" data-aos="fade-up" data-aos-delay="200">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-clipboard-list fa-3x text-info"></i>
+                    </div>
+                    <div>
+                        <div class="text-uppercase text-muted small">Tổng đăng ký</div>
+                        <h4 class="mb-0 text-dark">@Model.TotalEnrollments</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card admin-card h-100 shadow-sm border-0" data-aos="fade-up" data-aos-delay="300">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-user-check fa-3x text-warning"></i>
+                    </div>
+                    <div>
+                        <div class="text-uppercase text-muted small">Người dùng hoạt động</div>
+                        <h4 class="mb-0 text-dark">@Model.TotalActiveUsers</h4>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Tổng người dùng</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsers</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-users fa-2x text-gray-300"></i>
-                    </div>
+    <!-- Charts and Recent Courses -->
+    <div class="row mb-4">
+        <div class="col-xl-8 col-lg-7 mb-4">
+            <div class="card admin-card shadow-sm border-0" data-aos="fade-up">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-chart-line me-2"></i>Thống kê đăng ký theo tháng</h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="enrollmentChart" style="max-height: 300px;"></canvas>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Tổng đăng ký</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalEnrollments</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                    </div>
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card admin-card shadow-sm border-0" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header bg-primary text manual override: white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-book-open me-2"></i>Khóa học mới nhất</h6>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Người dùng hoạt động</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalActiveUsers</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-user-check fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Charts Row -->
-<div class="row mb-4">
-    <div class="col-xl-8 col-lg-7">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Thống kê đăng ký theo tháng</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="enrollmentChart" width="400" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-4 col-lg-5">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Khóa học mới nhất</h6>
-            </div>
-            <div class="card-body">
-                @foreach (var course in Model.RecentCourses.Take(5))
-                {
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="mr-3">
-                            @if (!string.IsNullOrEmpty(course.Thumbnail))
-                            {
-                                <img src="@course.Thumbnail" alt="@course.Title" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
-                            }
-                            else
-                            {
-                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                    <i class="fas fa-image text-muted"></i>
-                                </div>
-                            }
-                        </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">@course.Title</h6>
-                            <small class="text-muted">@course.Instructor.FullName - @course.CreatedDate.ToString("dd/MM/yyyy")</small>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Enrollments -->
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Đăng ký gần đây</h6>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Học viên</th>
-                                <th>Khóa học</th>
-                                <th>Ngày đăng ký</th>
-                                <th>Tiến độ</th>
-                                <th>Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var enrollment in Model.RecentEnrollments)
-                            {
-                                <tr>
-                                    <td>@enrollment.Student.FullName</td>
-                                    <td>@enrollment.Course.Title</td>
-                                    <td>@enrollment.EnrollmentDate.ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar" role="progressbar" style="width: @(enrollment.Progress)%"
-                                                 aria-valuenow="@enrollment.Progress" aria-valuemin="0" aria-valuemax="100">
-                                                @enrollment.Progress.ToString("F1")%
-                                            </div>
+                <div class="card-body p-4">
+                    @if (Model.RecentCourses.Any())
+                    {
+                        @foreach (var course in Model.RecentCourses.Take(5))
+                        {
+                            <div class="d-flex align-items-center mb-3 hover-effect">
+                                <div class="me-3">
+                                    @if (!string.IsNullOrEmpty(course.Thumbnail))
+                                    {
+                                        <img src="@course.Thumbnail" alt="@course.Title" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-image text-muted"></i>
                                         </div>
-                                    </td>
-                                    <td>
-                                        @if (enrollment.Status == EnrollmentStatus.Active)
-                                        {
-                                            <span class="badge badge-success">Hoạt động</span>
-                                        }
-                                        else if (enrollment.Status == EnrollmentStatus.Completed)
-                                        {
-                                            <span class="badge badge-primary">Hoàn thành</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge badge-secondary">@enrollment.Status</span>
-                                        }
-                                    </td>
+                                    }
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 text-truncate" style="max-width: 200px;">@course.Title</h6>
+                                    <small class="text-muted">@course.Instructor.FullName - @course.CreatedAt.ToString("dd/MM/yyyy")</small>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center"><i class="fas fa-info-circle me-2"></i>Chưa có khóa học mới.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Enrollments -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card admin-card shadow-sm border-0" data-aos="fade-up">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-user-plus me-2"></i>Đăng ký gần đây</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-modern table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Học viên</th>
+                                    <th>Khóa học</th>
+                                    <th>Ngày đăng ký</th>
+                                    <th>Tiến độ</th>
+                                    <th>Trạng thái</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var enrollment in Model.RecentEnrollments)
+                                {
+                                    <tr>
+                                        <td>@enrollment.Student.FullName</td>
+                                        <td class="text-truncate" style="max-width: 200px;">@enrollment.Course.Title</td>
+                                        <td>@enrollment.EnrollmentDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            <div class="progress" style="height: 20px; border-radius: 10px;">
+                                                <div class="progress-bar bg-@(enrollment.Status == EnrollmentStatus.Completed ? "success" : enrollment.Status == EnrollmentStatus.Active ? "info" : "secondary")"
+                                                     role="progressbar" style="width: @(enrollment.Progress)%;"
+                                                     aria-valuenow="@enrollment.Progress" aria-valuemin="0" aria-valuemax="100">
+                                                    @enrollment.Progress.ToString("F1")%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (enrollment.Status == EnrollmentStatus.Active)
+                                            {
+                                                <span class="badge bg-success">Hoạt động</span>
+                                            }
+                                            else if (enrollment.Status == EnrollmentStatus.Completed)
+                                            {
+                                                <span class="badge bg-primary">Hoàn thành</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@enrollment.Status</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -181,9 +181,67 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        .admin-card {
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .admin-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+            }
+
+        .table-modern th {
+            background: #f8f9fa;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            padding: 15px;
+        }
+
+        .table-modern td {
+            vertical-align: middle;
+            padding: 15px;
+        }
+
+        .table-modern tbody tr:hover {
+            background: #e9ecef;
+        }
+
+        .hover-effect:hover {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        [data-theme="dark"] .admin-card {
+            background: #2d3748;
+            color: #e5e7eb;
+        }
+
+        [data-theme="dark"] .table-modern th {
+            background: #4a5568;
+            color: #e5e7eb;
+        }
+
+        [data-theme="dark"] .table-modern tbody tr:hover {
+            background: #4a5568;
+        }
+
+        [data-theme="dark"] .hover-effect:hover {
+            background: #4a5568;
+        }
+    </style>
     <script>
-        // Load chart data
+        // Initialize AOS
+        AOS.init({ duration: 800, once: true });
+
+        // Enrollment Chart
         fetch('@Url.Action("GetChartData")')
             .then(response => response.json())
             .then(data => {
@@ -195,16 +253,36 @@
                         datasets: [{
                             label: 'Số lượng đăng ký',
                             data: data.enrollments,
-                            borderColor: 'rgb(75, 192, 192)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                            tension: 0.1
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: 'rgb(59, 130, 246)',
+                            pointHoverRadius: 8
                         }]
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: document.body.getAttribute('data-theme') === 'dark' ? '#e5e7eb' : '#333' }
+                            }
+                        },
                         scales: {
                             y: {
-                                beginAtZero: true
+                                beginAtZero: true,
+                                ticks: {
+                                    color: document.body.getAttribute('data-theme') === 'dark' ? '#e5e7eb' : '#333'
+                                },
+                                grid: { color: document.body.getAttribute('data-theme') === 'dark' ? '#4a5568' : '#e5e7eb' }
+                            },
+                            x: {
+                                ticks: {
+                                    color: document.body.getAttribute('data-theme') === 'dark' ? '#e5e7eb' : '#333'
+                                },
+                                grid: { display: false }
                             }
                         }
                     }

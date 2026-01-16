@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartLMS.Core.Common;
+using SmartLMS.Core.DTOs;
 using SmartLMS.Core.Entities;
+using SmartLMS.Core.Interfaces.Services;
 using SmartLMS.Infrastructure.Data;
 using SmartLMS.Web.Areas.Admin.Models;
 
@@ -12,65 +14,101 @@ namespace SmartLMS.Web.Areas.Admin.Controllers;
 [Authorize(Roles = Constants.ADMIN_ROLE + "," + Constants.INSTRUCTOR_ROLE)]
 public class LessonsController : Controller
 {
-    private readonly ApplicationDbContext _context;
+    private readonly ILessonService _lessonService;
+    private readonly IQuizzesService _quizzesService;
     private readonly ILogger<LessonsController> _logger;
 
-    public LessonsController(ApplicationDbContext context, ILogger<LessonsController> logger)
+    public LessonsController(ILessonService lessonService, IQuizzesService quizzesService, ILogger<LessonsController> logger)
     {
-        _context = context;
+        _lessonService = lessonService;
+        _quizzesService = quizzesService;
         _logger = logger;
     }
+
     // GET: Admin/Lessons?courseId=xxx
     public async Task<IActionResult> Index(Guid courseId)
     {
-        var course = await _context.Courses
-            .Include(c => c.Category)
-            .Include(c => c.Instructor)
-            .FirstOrDefaultAsync(c => c.Id == courseId);
+        var result = await _lessonService.GetLessonsByCourseAsync(courseId);
 
-        if (course == null)
+        if (!result.IsSuccess)
         {
+            TempData["ErrorMessage"] = result.ErrorMessage;
             return NotFound();
         }
 
-        var lessons = await _context.Lessons
-            .Where(l => l.CourseId == courseId)
-            .OrderBy(l => l.OrderIndex)
-            .ToListAsync();
-
         var viewModel = new LessonIndexViewModel
         {
-            Course = course,
-            Lessons = lessons
+            Course = result.Data.Course,
+            Lessons = result.Data.Lessons
         };
 
-        return View(viewModel);
+        return PartialView("Index", viewModel);
     }
+    [HttpGet]
+    public async Task<IActionResult> GetLessonsByCourse([FromQuery] Guid courseId)
+    {
+        if (courseId == Guid.Empty)
+        {
+            return BadRequest(new { success = false, message = "courseId không hợp lệ" });
+        }
 
+        var result = await _lessonService.GetLessonsByCourseAsync(courseId);
+        var quizzesTask = await _quizzesService.GetQuizzesByCourseAsync(courseId);
+        if (!result.IsSuccess)
+        {
+            return NotFound(new { success = false, message = result.ErrorMessage });
+        }
+
+        return Ok(new
+        {
+            success = true,
+            data = new
+            {
+                course = new
+                {
+                    id = result.Data.Course.Id,
+                    title = result.Data.Course.Title,
+                    thumbnail = result.Data.Course.Thumbnail,
+                    instructor = new
+                    {
+                        fullName = result.Data.Course.Instructor?.FullName
+                    },
+                    category = new
+                    {
+                        name = result.Data.Course.Category?.Name
+                    }
+                },
+                lessons = result.Data.Lessons.Select(l => new
+                {
+                    id = l.Id,
+                    title = l.Title,
+                    content = l.Content,
+                    videoUrl = l.VideoUrl,
+                    duration = l.Duration,
+                    orderIndex = l.OrderIndex,
+                    isPreview = l.IsPreview,
+                    isPublished = l.IsPublished,
+                    createdDate = l.CreatedDate
+                }).ToList(),
+                quizzes = quizzesTask.Data
+            }
+        });
+    }
     // GET: Admin/Lessons/Create?courseId=xxx
     [HttpGet]
     public async Task<IActionResult> Create(Guid courseId)
     {
-        var course = await _context.Courses.FindAsync(courseId);
-        if (course == null)
+        var result = await _lessonService.GetCreateDtoAsync(courseId);
+
+        if (!result.IsSuccess)
         {
+            TempData["ErrorMessage"] = result.ErrorMessage;
             return NotFound();
         }
 
-        // Get next order index
-        var maxOrder = await _context.Lessons
-            .Where(l => l.CourseId == courseId)
-            .MaxAsync(l => (int?)l.OrderIndex) ?? 0;
+        var viewModel = MapToViewModel(result.Data);
 
-        var viewModel = new LessonCreateEditViewModel
-        {
-            CourseId = courseId,
-            CourseName = course.Title,
-            OrderIndex = maxOrder + 1,
-            IsPublished = true
-        };
-
-        return View(viewModel);
+        return PartialView("Create", viewModel);
     }
 
     // POST: Admin/Lessons/Create
@@ -78,90 +116,72 @@ public class LessonsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(LessonCreateEditViewModel model, IFormFile? video)
     {
-        if (ModelState.IsValid)
+        try
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var lesson = new Lesson
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return Json(new
                 {
-                    CourseId = model.CourseId,
-                    Title = model.Title,
-                    Content = model.Content,
-                    Duration = model.Duration,
-                    OrderIndex = model.OrderIndex,
-                    IsPreview = model.IsPreview,
-                    IsPublished = model.IsPublished,
-                    CreatedDate = DateTime.UtcNow
-                };
-
-                // Handle video upload
-                if (video != null && video.Length > 0)
-                {
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "videos");
-                    Directory.CreateDirectory(uploadsFolder);
-
-                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(video.FileName);
-                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await video.CopyToAsync(fileStream);
-                    }
-
-                    lesson.VideoUrl = "/uploads/videos/" + uniqueFileName;
-                }
-
-                _context.Lessons.Add(lesson);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Bài học đã được tạo thành công!";
-                return RedirectToAction(nameof(Index), new { courseId = model.CourseId });
+                    success = false,
+                    message = "Vui lòng kiểm tra lại thông tin!",
+                    errors = errors
+                });
             }
-            catch (Exception ex)
+
+            var dto = MapToDto(model);
+            var result = await _lessonService.CreateLessonAsync(dto, video);
+
+            if (!result.IsSuccess)
             {
-                _logger.LogError(ex, "Error creating lesson");
-                ModelState.AddModelError("", "Có lỗi xảy ra khi tạo bài học.");
+                return Json(new
+                {
+                    success = false,
+                    message = result.ErrorMessage
+                });
             }
+
+            _logger.LogInformation("Created lesson {LessonId} for course {CourseId}", result.Data, model.CourseId);
+
+            return Json(new
+            {
+                success = true,
+                message = "Bài học đã được tạo thành công!",
+                courseId = model.CourseId,
+                redirectUrl = Url.Action("Index", new { courseId = model.CourseId })
+            });
         }
-
-        // Reload course name if validation fails
-        var course = await _context.Courses.FindAsync(model.CourseId);
-        if (course != null)
+        catch (Exception ex)
         {
-            model.CourseName = course.Title;
-        }
+            _logger.LogError(ex, "Error creating lesson for course {CourseId}", model.CourseId);
 
-        return View(model);
+            return Json(new
+            {
+                success = false,
+                message = "Có lỗi xảy ra, vui lòng liên hệ quản trị!"
+            });
+        }
     }
 
     // GET: Admin/Lessons/Edit/5
     [HttpGet]
     public async Task<IActionResult> Edit(Guid id)
     {
-        var lesson = await _context.Lessons
-            .Include(l => l.Course)
-            .FirstOrDefaultAsync(l => l.Id == id);
+        var result = await _lessonService.GetEditDtoAsync(id);
 
-        if (lesson == null)
+        if (!result.IsSuccess)
         {
+            TempData["ErrorMessage"] = result.ErrorMessage;
             return NotFound();
         }
 
-        var viewModel = new LessonCreateEditViewModel
-        {
-            Id = lesson.Id,
-            CourseId = lesson.CourseId,
-            CourseName = lesson.Course.Title,
-            Title = lesson.Title,
-            Content = lesson.Content,
-            Duration = lesson.Duration,
-            OrderIndex = lesson.OrderIndex,
-            IsPreview = lesson.IsPreview,
-            IsPublished = lesson.IsPublished,
-            CurrentVideoUrl = lesson.VideoUrl
-        };
+        var viewModel = MapToViewModel(result.Data);
 
-        return View(viewModel);
+        return PartialView("Edit", viewModel);
     }
 
     // POST: Admin/Lessons/Edit/5
@@ -169,171 +189,153 @@ public class LessonsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(LessonCreateEditViewModel model, IFormFile? video)
     {
-        if (ModelState.IsValid)
+        try
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var lesson = await _context.Lessons.FindAsync(model.Id);
-                if (lesson == null)
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return Json(new
                 {
-                    return NotFound();
-                }
-
-                lesson.Title = model.Title;
-                lesson.Content = model.Content;
-                lesson.Duration = model.Duration;
-                lesson.OrderIndex = model.OrderIndex;
-                lesson.IsPreview = model.IsPreview;
-                lesson.IsPublished = model.IsPublished;
-
-                // Handle new video upload
-                if (video != null && video.Length > 0)
-                {
-                    // Delete old video if exists
-                    if (!string.IsNullOrEmpty(lesson.VideoUrl))
-                    {
-                        var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", lesson.VideoUrl.TrimStart('/'));
-                        if (System.IO.File.Exists(oldFilePath))
-                        {
-                            System.IO.File.Delete(oldFilePath);
-                        }
-                    }
-
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "videos");
-                    Directory.CreateDirectory(uploadsFolder);
-
-                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(video.FileName);
-                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await video.CopyToAsync(fileStream);
-                    }
-
-                    lesson.VideoUrl = "/uploads/videos/" + uniqueFileName;
-                }
-
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Bài học đã được cập nhật thành công!";
-                return RedirectToAction(nameof(Index), new { courseId = lesson.CourseId });
+                    success = false,
+                    message = "Vui lòng kiểm tra lại thông tin!",
+                    errors = errors
+                });
             }
-            catch (Exception ex)
+
+            var dto = MapToDto(model);
+            var result = await _lessonService.UpdateLessonAsync(dto, video);
+
+            if (!result.IsSuccess)
             {
-                _logger.LogError(ex, "Error updating lesson");
-                ModelState.AddModelError("", "Có lỗi xảy ra khi cập nhật bài học.");
+                return Json(new
+                {
+                    success = false,
+                    message = result.ErrorMessage
+                });
             }
+
+            _logger.LogInformation("Updated lesson {LessonId}", model.Id);
+
+            return Json(new
+            {
+                success = true,
+                message = "Bài học đã được cập nhật thành công!",
+                courseId = model.CourseId,
+                redirectUrl = Url.Action("Index", new { courseId = model.CourseId })
+            });
         }
-
-        // Reload course name if validation fails
-        var course = await _context.Courses.FindAsync(model.CourseId);
-        if (course != null)
+        catch (Exception ex)
         {
-            model.CourseName = course.Title;
-        }
+            _logger.LogError(ex, "Error updating lesson {LessonId}", model.Id);
 
-        return View(model);
+            return Json(new
+            {
+                success = false,
+                message = "Có lỗi xảy ra, vui lòng liên hệ quản trị!"
+            });
+        }
     }
 
     // GET: Admin/Lessons/Details/5
     public async Task<IActionResult> Details(Guid id)
     {
-        var lesson = await _context.Lessons
-            .Include(l => l.Course)
-                .ThenInclude(c => c.Category)
-            .Include(l => l.Course)
-                .ThenInclude(c => c.Instructor)
-            .FirstOrDefaultAsync(l => l.Id == id);
+        var result = await _lessonService.GetLessonDetailsAsync(id);
 
-        if (lesson == null)
+        if (!result.IsSuccess)
         {
+            TempData["ErrorMessage"] = result.ErrorMessage;
             return NotFound();
         }
 
-        return View(lesson);
+        return PartialView("Details", result.Data);
     }
 
-    // POST: Admin/Lessons/Delete/5
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    // DELETE: Admin/Lessons/Delete/5
+    [HttpDelete]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var lesson = await _context.Lessons.FindAsync(id);
-        if (lesson == null)
+        var result = await _lessonService.DeleteLessonAsync(id);
+
+        return Json(new
         {
-            return NotFound();
-        }
-
-        var courseId = lesson.CourseId;
-
-        // Check if lesson has progress records
-        var hasProgress = await _context.LessonProgress.AnyAsync(lp => lp.LessonId == id);
-        if (hasProgress)
-        {
-            TempData["ErrorMessage"] = "Không thể xóa bài học đã có học viên học.";
-            return RedirectToAction(nameof(Details), new { id });
-        }
-
-        // Delete video file if exists
-        if (!string.IsNullOrEmpty(lesson.VideoUrl))
-        {
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", lesson.VideoUrl.TrimStart('/'));
-            if (System.IO.File.Exists(filePath))
-            {
-                System.IO.File.Delete(filePath);
-            }
-        }
-
-        _context.Lessons.Remove(lesson);
-        await _context.SaveChangesAsync();
-
-        TempData["SuccessMessage"] = "Bài học đã được xóa thành công!";
-        return RedirectToAction(nameof(Index), new { courseId });
+            success = result.IsSuccess,
+            message = result.IsSuccess ? "Xóa thành công" : result.ErrorMessage
+        });
     }
 
     // POST: Admin/Lessons/TogglePublish
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> TogglePublish(Guid id)
     {
-        var lesson = await _context.Lessons.FindAsync(id);
-        if (lesson == null)
+        var result = await _lessonService.TogglePublishAsync(id);
+
+        return Json(new
         {
-            return NotFound();
-        }
-
-        lesson.IsPublished = !lesson.IsPublished;
-        await _context.SaveChangesAsync();
-
-        TempData["SuccessMessage"] = lesson.IsPublished ?
-            "Bài học đã được xuất bản." :
-            "Bài học đã được ẩn.";
-
-        return RedirectToAction(nameof(Details), new { id });
+            success = result.IsSuccess,
+            message = result.IsSuccess ? "Thành công" : result.ErrorMessage
+        });
     }
 
     // POST: Admin/Lessons/Reorder
     [HttpPost]
-    public async Task<IActionResult> Reorder(Guid courseId, List<Guid> lessonIds)
+    public async Task<IActionResult> Reorder([FromBody] TogglePublishCommand cmd)
     {
-        try
+        if (cmd.courseId == null || !cmd.lessonIds.Any())
         {
-            for (int i = 0; i < lessonIds.Count; i++)
-            {
-                var lesson = await _context.Lessons.FindAsync(lessonIds[i]);
-                if (lesson != null && lesson.CourseId == courseId)
-                {
-                    lesson.OrderIndex = i + 1;
-                }
-            }
+            return Json(new { success = false, message = "Danh sách bài học không hợp lệ" });
+        }
 
-            await _context.SaveChangesAsync();
-            return Json(new { success = true, message = "Đã cập nhật thứ tự bài học" });
-        }
-        catch (Exception ex)
+        var result = await _lessonService.ReorderLessonsAsync(cmd.courseId, cmd.lessonIds);
+
+        return Json(new
         {
-            _logger.LogError(ex, "Error reordering lessons");
-            return Json(new { success = false, message = "Có lỗi xảy ra" });
-        }
+            success = result.IsSuccess,
+            message = result.ErrorMessage
+        });
+    }
+
+    #region Private Helper Methods
+    private LessonCreateEditViewModel MapToViewModel(LessonCreateEditDto dto)
+    {
+        return new LessonCreateEditViewModel
+        {
+            Id = dto.Id,
+            CourseId = dto.CourseId,
+            CourseName = dto.CourseName,
+            Title = dto.Title,
+            Content = dto.Content,
+            Duration = dto.Duration,
+            OrderIndex = dto.OrderIndex,
+            IsPreview = dto.IsPreview,
+            IsPublished = dto.IsPublished,
+            CurrentVideoUrl = dto.CurrentVideoUrl
+        };
+    }
+
+    private LessonCreateEditDto MapToDto(LessonCreateEditViewModel model)
+    {
+        return new LessonCreateEditDto
+        {
+            Id = model.Id,
+            CourseId = model.CourseId,
+            Title = model.Title,
+            Content = model.Content,
+            Duration = model.Duration,
+            OrderIndex = model.OrderIndex,
+            IsPreview = model.IsPreview,
+            IsPublished = model.IsPublished
+        };
+    }
+
+    #endregion
+
+    public class TogglePublishCommand
+    {
+        public Guid courseId { get; set; }
+        public List<Guid> lessonIds { get; set; }
     }
 }

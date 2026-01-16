@@ -6,277 +6,369 @@
     ViewData["Title"] = "Chi tiết khóa học - " + Model.Course.Title;
 }
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Chi tiết khóa học</h1>
-    <div>
-        <a href="@Url.Action("Index")" class="btn btn-secondary">
-            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
-        </a>
-        <a href="@Url.Action("Index", "Lessons", new { courseId = Model.Course.Id })" class="btn btn-info">
-            <i class="fas fa-list fa-sm text-white-50"></i> Quản lý bài học
-        </a>
-        <form method="post" asp-action="TogglePublish" class="d-inline">
-            <input type="hidden" name="id" value="@Model.Course.Id" />
-            @if (Model.Course.IsPublished)
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4" data-aos="fade-down">
+        <h1 class="h3 mb-0 text-primary"><i class="fas fa-book me-2"></i>Chi tiết khóa học</h1>
+        <div class="btn-group">
+            <a asp-action="Index" class="btn btn-outline-secondary me-2" title="Quay lại danh sách khóa học">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại
+            </a>
+            <a asp-action="Index" asp-controller="Lessons" asp-route-courseId="@Model.Course.Id" class="btn btn-outline-info me-2" title="Quản lý bài học">
+                <i class="fas fa-list me-2"></i>Quản lý bài học
+            </a>
+            <a asp-action="Edit" asp-route-id="@Model.Course.Id" class="btn btn-outline-warning me-2" title="Chỉnh sửa thông tin khóa học">
+                <i class="fas fa-edit me-2"></i>Chỉnh sửa
+            </a>
+            @if (Model.Course.TotalEnrollments == 0)
             {
-                <button type="submit" class="btn btn-warning">
-                    <i class="fas fa-eye-slash fa-sm text-white-50"></i> Ẩn khóa học
-                </button>
+                <form method="post" asp-action="Delete" class="d-inline">
+                    <input type="hidden" name="id" value="@Model.Course.Id" />
+                    <button type="submit" class="btn btn-custom btn-danger" onclick="confirmDelete(event, '@Model.Course.Title')" title="Xóa khóa học">
+                        <i class="fas fa-trash me-2"></i>Xóa
+                    </button>
+                </form>
             }
-            else
-            {
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-eye fa-sm text-white-50"></i> Xuất bản
-                </button>
-            }
-        </form>
-        <a href="@Url.Action("Edit", new { id = Model.Course.Id })" class="btn btn-warning">
-            <i class="fas fa-edit fa-sm text-white-50"></i> Chỉnh sửa
-        </a>
-        @if (Model.Course.TotalEnrollments == 0)
-        {
-            <form method="post" asp-action="Delete" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa khóa học này?')">
-                <input type="hidden" name="id" value="@Model.Course.Id" />
-                <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-trash fa-sm text-white-50"></i> Xóa
-                </button>
-            </form>
-        }
-    </div>
-</div>
-
-<!-- Course Overview -->
-<div class="row mb-4">
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Thông tin khóa học</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        @if (!string.IsNullOrEmpty(Model.Course.Thumbnail))
-                        {
-                            <img src="@Model.Course.Thumbnail" alt="@Model.Course.Title" class="img-fluid rounded shadow">
-                        }
-                        else
-                        {
-                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 200px;">
-                                <i class="fas fa-image fa-3x text-muted"></i>
-                            </div>
-                        }
-                    </div>
-                    <div class="col-md-8">
-                        <h3 class="mb-3">@Model.Course.Title</h3>
-                        <p class="text-muted mb-3">@Model.Course.ShortDescription</p>
-
-                        <div class="row mb-3">
-                            <div class="col-sm-6">
-                                <strong>Giảng viên:</strong><br>
-                                <span class="text-primary">@Model.Course.Instructor.FullName</span>
-                            </div>
-                            <div class="col-sm-6">
-                                <strong>Danh mục:</strong><br>
-                                <span class="badge bg-primary">@Model.Course.Category.Name</span>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-sm-6">
-                                <strong>Cấp độ:</strong><br>
-                                <span class="badge bg-info">@Model.Course.Level</span>
-                            </div>
-                            <div class="col-sm-6">
-                                <strong>Giá:</strong><br>
-                                @if (Model.Course.IsFree)
-                                {
-                                    <span class="badge bg-success fs-6">Miễn phí</span>
-                                }
-                                else
-                                {
-                                    <span class="text-primary fw-bold">@Model.Course.Price.ToString("N0") VNĐ</span>
-                                }
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <strong>Thời lượng:</strong><br>
-                                @Model.Course.EstimatedDuration phút
-                            </div>
-                            <div class="col-sm-6">
-                                <strong>Trạng thái:</strong><br>
-                                @if (Model.Course.IsPublished)
-                                {
-                                    <span class="badge bg-success">Đã xuất bản</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning">Nháp</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                @if (!string.IsNullOrEmpty(Model.Course.Description))
-                {
-                    <hr>
-                    <h5>Mô tả chi tiết:</h5>
-                    <div class="content">@Html.Raw(Model.Course.Description.Replace("\n", "<br>"))</div>
-                }
-
-                @if (!string.IsNullOrEmpty(Model.Course.WhatYouWillLearn))
-                {
-                    <hr>
-                    <h5>Bạn sẽ học được gì:</h5>
-                    <div class="content">@Html.Raw(Model.Course.WhatYouWillLearn.Replace("\n", "<br>"))</div>
-                }
-
-                @if (!string.IsNullOrEmpty(Model.Course.Requirements))
-                {
-                    <hr>
-                    <h5>Yêu cầu:</h5>
-                    <div class="content">@Html.Raw(Model.Course.Requirements.Replace("\n", "<br>"))</div>
-                }
-            </div>
         </div>
+    </div>
 
-        <!-- Course Lessons -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    Nội dung khóa học (@Model.Course.TotalLessons bài học)
-                </h6>
+    <!-- Course Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card admin-card shadow-sm border-0 mb-4" data-aos="fade-up">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-info-circle me-2"></i>Thông tin khóa học</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-4">
+                            @if (!string.IsNullOrEmpty(Model.Course.Thumbnail))
+                            {
+                                <img src="@Model.Course.Thumbnail" alt="@Model.Course.Title" class="img-fluid rounded shadow" style="max-height: 200px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="col-md-8">
+                            <h3 class="mb-3 text-truncate" style="max-width: 500px;">@Model.Course.Title</h3>
+                            <p class="text-muted mb-3">@Model.Course.ShortDescription</p>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <strong>Giảng viên:</strong><br>
+                                    <span class="text-primary">@Model.Course.Instructor.FullName</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Danh mục:</strong><br>
+                                    <span class="badge bg-primary">@Model.Course.Category.Name</span>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <strong>Cấp độ:</strong><br>
+                                    <span class="badge bg-info">@Model.Course.Level</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Giá:</strong><br>
+                                    @if (Model.Course.IsFree)
+                                    {
+                                        <span class="badge bg-success fs-6">Miễn phí</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-primary fw-bold">@Model.Course.Price.ToString("N0") VNĐ</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <strong>Trạng thái:</strong><br>
+                                    @if (Model.Course.Status == CourseStatus.Published)
+                                    {
+                                        <span class="badge bg-success">Đã xuất bản</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">Nháp</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Course.Description))
+                    {
+                        <hr class="my-4">
+                        <h5>Mô tả chi tiết:</h5>
+                        <div class="content">@Html.Raw(Model.Course.Description.Replace("\n", "<br>"))</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Course.WhatYouWillLearn))
+                    {
+                        <hr class="my-4">
+                        <h5>Bạn sẽ học được gì:</h5>
+                        <div class="content">@Html.Raw(Model.Course.WhatYouWillLearn.Replace("\n", "<br>"))</div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Course.Requirements))
+                    {
+                        <hr class="my-4">
+                        <h5>Yêu cầu:</h5>
+                        <div class="content">@Html.Raw(Model.Course.Requirements.Replace("\n", "<br>"))</div>
+                    }
+                </div>
             </div>
-            <div class="card-body">
-                @if (Model.Course.Lessons.Any())
-                {
-                    <div class="accordion" id="lessonsAccordion">
-                        @foreach (var lesson in Model.Course.Lessons.OrderBy(l => l.OrderIndex))
-                        {
-                            var collapseId = $"lesson{lesson.OrderIndex}";
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId">
-                                        <div class="d-flex justify-content-between w-100 me-3">
-                                            <span>
-                                                <i class="fas fa-play-circle me-2"></i>
-                                                Bài @lesson.OrderIndex: @lesson.Title
-                                            </span>
-                                            <span>
-                                                @if (lesson.IsPreview)
-                                                {
-                                                    <span class="badge bg-info me-2">Xem trước</span>
-                                                }
-                                                @if (!lesson.IsPublished)
-                                                {
-                                                    <span class="badge bg-warning me-2">Nháp</span>
-                                                }
-                                                <span class="text-muted">
-                                                    <i class="fas fa-clock me-1"></i>
-                                                    @TimeSpan.FromSeconds(lesson.Duration).ToString(@"mm\:ss")
+
+            <!-- Course Lessons -->
+            <div class="card admin-card shadow-sm border-0" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-play-circle me-2"></i>Nội dung khóa học (@Model.Course.TotalLessons bài học)</h6>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.Course.Lessons.Any())
+                    {
+                        <div class="accordion" id="lessonsAccordion">
+                            @foreach (var lesson in Model.Course.Lessons.OrderBy(l => l.OrderIndex))
+                            {
+                                var collapseId = $"lesson{lesson.OrderIndex}";
+                                <div class="accordion-item border-0 mb-2 rounded" data-aos="fade-up" data-aos-delay="@(lesson.OrderIndex * 50)">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId">
+                                            <div class="d-flex justify-content-between w-100 me-3">
+                                                <span class="text-truncate" style="max-width: 300px;">
+                                                    <i class="fas fa-play-circle me-2"></i>
+                                                    Bài @lesson.OrderIndex: @lesson.Title
                                                 </span>
-                                            </span>
-                                        </div>
-                                    </button>
-                                </h2>
-                                <div id="@collapseId" class="accordion-collapse collapse" data-bs-parent="#lessonsAccordion">
-                                    <div class="accordion-body">
-                                        <p>@lesson.Content</p>
-                                        @if (!string.IsNullOrEmpty(lesson.VideoUrl))
-                                        {
+                                                <span>
+                                                    @if (lesson.IsPreview)
+                                                    {
+                                                        <span class="badge bg-info me-2">Xem trước</span>
+                                                    }
+                                                    @if (!lesson.IsPublished)
+                                                    {
+                                                        <span class="badge bg-warning me-2">Nháp</span>
+                                                    }
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        @TimeSpan.FromSeconds(lesson.Duration).ToString(@"mm\:ss")
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="@collapseId" class="accordion-collapse collapse" data-bs-parent="#lessonsAccordion">
+                                        <div class="accordion-body">
+                                            <p>@lesson.Content</p>
+                                            @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+                                            {
+                                                <p>
+                                                    <strong>Video URL:</strong>
+                                                    <code class="bg-light p-1 rounded">@lesson.VideoUrl</code>
+                                                </p>
+                                            }
                                             <p>
-                                                <strong>Video URL:</strong>
-                                                <code>@lesson.VideoUrl</code>
+                                                <strong>Ngày tạo:</strong> @lesson.CreatedDate.ToString("dd/MM/yyyy HH:mm")
                                             </p>
-                                        }
-                                        <p>
-                                            <strong>Ngày tạo:</strong> @lesson.CreatedDate.ToString("dd/MM/yyyy HH:mm")
-                                        </p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-4">
-                        <i class="fas fa-video fa-3x text-muted mb-3"></i>
-                        <h5>Chưa có bài học nào</h5>
-                        <p class="text-muted">Khóa học chưa có nội dung.</p>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-4">
-        <!-- Course Stats -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Thống kê</h6>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <h4 class="text-primary">@Model.Course.TotalEnrollments</h4>
-                        <small class="text-muted">Học viên</small>
-                    </div>
-                    <div class="col-6">
-                        <h4 class="text-success">@Model.Course.TotalLessons</h4>
-                        <small class="text-muted">Bài học</small>
-                    </div>
-                </div>
-                <hr>
-                <div class="text-center">
-                    <p class="mb-2"><strong>Ngày tạo:</strong></p>
-                    <p class="text-muted">@Model.Course.CreatedDate.ToString("dd/MM/yyyy HH:mm")</p>
-
-                    @if (Model.Course.PublishedDate.HasValue)
-                    {
-                        <p class="mb-2"><strong>Ngày xuất bản:</strong></p>
-                        <p class="text-muted">@Model.Course.PublishedDate.Value.ToString("dd/MM/yyyy HH:mm")</p>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Enrollments -->
-        <div class="card shadow">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Đăng ký gần đây</h6>
-            </div>
-            <div class="card-body">
-                @if (Model.RecentEnrollments.Any())
-                {
-                    @foreach (var enrollment in Model.RecentEnrollments.OrderByDescending(e => e.EnrollmentDate).Take(5))
-                    {
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="flex-shrink-0 me-3">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    @enrollment.Student.FirstName.Substring(0, 1)@enrollment.Student.LastName.Substring(0, 1)
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0">@enrollment.Student.FullName</h6>
-                                <small class="text-muted">
-                                    @enrollment.EnrollmentDate.ToString("dd/MM/yyyy") -
-                                    @enrollment.Progress.ToString("F1")% hoàn thành
-                                </small>
-                            </div>
+                            }
                         </div>
                     }
-                }
-                else
-                {
-                    <div class="text-center py-3">
-                        <i class="fas fa-users fa-2x text-muted mb-2"></i>
-                        <p class="text-muted mb-0">Chưa có học viên đăng ký</p>
+                    else
+                    {
+                        <div class="text-center py-4" data-aos="fade-up">
+                            <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Chưa có bài học nào</h5>
+                            <p class="text-muted">Thêm bài học để bắt đầu xây dựng nội dung.</p>
+                            <a asp-action="Create" asp-controller="Lessons" asp-route-courseId="@Model.Course.Id" class="btn btn-custom">Thêm bài học</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Course Stats -->
+            <div class="card admin-card shadow-sm border-0 mb-4" data-aos="fade-up">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-chart-bar me-2"></i>Thống kê</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">@Model.Course.TotalEnrollments</h4>
+                            <small class="text-muted">Học viên</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">@Model.Course.TotalLessons</h4>
+                            <small class="text-muted">Bài học</small>
+                        </div>
                     </div>
-                }
+                    <hr class="my-4">
+                    <div class="text-center">
+                        <p class="mb-2"><strong>Ngày tạo:</strong></p>
+                        <p class="text-muted">@Model.Course.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+
+                        @if (Model.Course.SubmittedAt.HasValue)
+                        {
+                            <p class="mb-2"><strong>Ngày xuất bản:</strong></p>
+                            <p class="text-muted">@Model.Course.SubmittedAt.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Enrollments -->
+            <div class="card admin-card shadow-sm border-0" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-users me-2"></i>Đăng ký gần đây</h6>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.RecentEnrollments.Any())
+                    {
+                        @foreach (var enrollment in Model.RecentEnrollments.OrderByDescending(e => e.EnrollmentDate).Take(5))
+                        {
+                            <div class="d-flex align-items-center mb-3" data-aos="fade-up" data-aos-delay="@((Model.RecentEnrollments.IndexOf(enrollment) + 1) * 50)">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        @enrollment.Student.FirstName.Substring(0, 1)@enrollment.Student.LastName.Substring(0, 1)
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0 text-truncate" style="max-width: 200px;">@enrollment.Student.FullName</h6>
+                                    <small class="text-muted">
+                                        @enrollment.EnrollmentDate.ToString("dd/MM/yyyy") - @enrollment.Progress.ToString("F1")% hoàn thành
+                                    </small>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-3" data-aos="fade-up">
+                            <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Chưa có học viên đăng ký</p>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        .admin-card {
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .admin-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+            }
+
+        .accordion-button {
+            border-radius: 8px !important;
+            transition: all 0.3s ease;
+        }
+
+            .accordion-button:not(.collapsed) {
+                background: var(--primary-color) !important;
+                color: #fff !important;
+            }
+
+        .accordion-item {
+            transition: all 0.3s ease;
+        }
+
+        .content {
+            line-height: 1.6;
+        }
+
+        [data-theme="dark"] .admin-card {
+            background: #2d3748;
+            color: #e5e7eb;
+        }
+
+        [data-theme="dark"] .accordion-button {
+            background: #4a5568;
+            color: #e5e7eb;
+        }
+
+            [data-theme="dark"] .accordion-button:not(.collapsed) {
+                background: var(--primary-color) !important;
+                color: #fff !important;
+            }
+
+        [data-theme="dark"] .accordion-body {
+            background: #2d3748;
+            color: #e5e7eb;
+        }
+
+        [data-theme="dark"] .bg-light {
+            background: #4a5568 !important;
+        }
+
+        [data-theme="dark"] code {
+            background: #1a202c !important;
+            color: #e5e7eb;
+        }
+
+        [data-theme="dark"] .text-muted {
+            color: #d1d5db !important;
+        }
+    </style>
+    <script>
+        // Initialize AOS
+        AOS.init({ duration: 800, once: true });
+
+        // Confirm toggle publish
+        function confirmToggle(event, courseTitle, action) {
+            event.preventDefault();
+            Swal.fire({
+                title: `${action.charAt(0).toUpperCase() + action.slice(1)} khóa học?`,
+                text: `Bạn có chắc muốn ${action} "${courseTitle}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: action === 'ẩn' ? '#f6c107' : '#28a745',
+                cancelButtonColor: '#d33',
+                confirmButtonText: `<i class="fas fa-${action === 'ẩn' ? 'eye-slash' : 'eye'}"></i> ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+                cancelButtonText: '<i class="fas fa-times"></i> Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    event.target.closest('form').submit();
+                }
+            });
+        }
+
+        // Confirm delete
+        function confirmDelete(event, courseTitle) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Xóa khóa học?',
+                text: `Bạn có chắc muốn xóa "${courseTitle}"? Hành động này không thể hoàn tác.`,
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '<i class="fas fa-trash"></i> Xóa',
+                cancelButtonText: '<i class="fas fa-times"></i> Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    event.target.closest('form').submit();
+                }
+            });
+        }
+    </script>
+}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,8 +14,7 @@ namespace SmartLMS.Core.Entities
         public string Content { get; set; } = string.Empty;    // Nội dung đáp án
         public bool IsCorrect { get; set; } = false;          // Đáp án đúng
         public int OrderIndex { get; set; }                    // Thứ tự đáp án
-
-        // Navigation properties
+        [ForeignKey("QuestionId")]
         public Question Question { get; set; } = null!;
     }
 }

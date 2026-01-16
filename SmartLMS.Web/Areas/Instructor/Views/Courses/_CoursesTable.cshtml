@@ -1,0 +1,131 @@
+﻿@* @using SmartLMS.Web.Areas.Instructor.Models
+@model InstructorCourseViewModel
+
+<div id="courses-table">
+    <div class="table-responsive">
+        <div id="myGrid" style="height: 80%"></div>
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Tên khóa học</th>
+                    <th>Giảng viên</th>
+                    <th>Loại</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Courses.TotalCount > 1)
+                {
+                    @foreach (var c in Model.Courses.Items)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@c.Id" class="text-decoration-none">
+                                    @c.Title
+                                </a>
+                            </td>
+                            <td><span class="badge bg-secondary">@c.Category.Name</span></td>
+                            <td>
+                                <span class="badge bg-@(
+    c.Status == CourseStatus.Published ? "success" :
+    c.Status == CourseStatus.Draft ? "secondary" :
+    c.Status == CourseStatus.Pending ? "warning" :
+    c.Status == CourseStatus.Archived ? "dark" :
+    "info")">
+                                    @(
+                                        c.Status == CourseStatus.Published ? "Đang mở" :
+                                        c.Status == CourseStatus.Draft ? "Bản nháp" :
+                                        c.Status == CourseStatus.Pending ? "Chờ duyệt" :
+                                        c.Status == CourseStatus.Archived ? "Lưu trữ" :
+                                        c.Status.ToString()
+                                        )
+                                </span>
+                            </td>
+                            <td>@c.CreatedDate:dd/MM/yyyy</td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-warning">Sửa</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            Không có khóa học nào.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+<script id="coursesData" type="application/json">
+    @Html.Raw(JsonSerializer.Serialize(Model.Courses.Items))
+</script>
+@section Scripts {
+    <script>
+        const raw = document.getElementById('coursesData').textContent;
+        const rowData = JSON.parse(raw);
+            const gridOptions = {
+            rowData: rowData,
+            columnDefs: [
+                {
+                    headerName: "Tên khóa học",
+                    field: "title",
+                    cellRenderer: params => {
+                        return `<a href="/Instructor/Courses/Details/${params.data.id}" class="text-decoration-none">${params.value}</a>`;
+                    }
+                },
+                {
+                    headerName: "Loại",
+                    valueGetter: params => params.data.category?.name,
+                    cellRenderer: params => `<span class="badge bg-secondary">${params.value}</span>`
+                },
+                {
+                    headerName: "Trạng thái",
+                    field: "status",
+                    cellRenderer: params => {
+                        const s = params.value;
+                        const map = {
+                            0: { text: "Đang mở", cls: "success" },
+                            1: { text: "Bản nháp", cls: "secondary" },
+                            2: { text: "Chờ duyệt", cls: "warning" },
+                            3: { text: "Lưu trữ", cls: "dark" }
+                        };
+
+                        const item = map[s] ?? { text: s, cls: "info" };
+                        return `<span class="badge bg-${item.cls}">${item.text}</span>`;
+                    }
+                },
+                {
+                    headerName: "Ngày tạo",
+                    field: "createdDate",
+                    valueFormatter: params => {
+                        const d = new Date(params.value);
+                        return d.toLocaleDateString("vi-VN");
+                    }
+                },
+                {
+                    headerName: "Hành động",
+                    field: "id",
+                    cellRenderer: params => {
+                        return `<a href="/Instructor/Courses/Edit/${params.value}" class="btn btn-sm btn-warning">Sửa</a>`;
+                    }
+                }
+            ],
+            defaultColDef: {
+                resizable: true,
+                sortable: true,
+                filter: true
+            }
+        };
+
+        const myGridElement = document.querySelector('#myGrid');
+        agGrid.createGrid(myGridElement, gridOptions);
+</script>
+}
+ *@

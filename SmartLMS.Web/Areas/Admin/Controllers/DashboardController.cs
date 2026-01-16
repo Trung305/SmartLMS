@@ -32,7 +32,7 @@ public class DashboardController : Controller
             RecentCourses = await _context.Courses
                 .Include(c => c.Category)
                 .Include(c => c.Instructor)
-                .OrderByDescending(c => c.CreatedDate)
+                .OrderByDescending(c => c.CreatedAt)
                 .Take(5)
                 .ToListAsync(),
 

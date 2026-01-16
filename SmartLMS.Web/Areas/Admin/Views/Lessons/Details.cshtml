@@ -1,33 +1,30 @@
 ﻿@model Lesson
-@{
-    ViewData["Title"] = "Chi tiết bài học - " + Model.Title;
-}
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Chi tiết bài học</h1>
+    <h1 class="h3 mb-0 text-gray-800"></h1>
     <div>
-        <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-warning">
-            <i class="fas fa-edit fa-sm text-white-50"></i> Chỉnh sửa
+        <a onclick="showpopup('Sửa bài học', '/Admin/Lessons/Edit/@Model.Id'); return false;" class="btn btn-warning">
+            <i class="fas fa-edit fa-sm text-white-50"></i> Sửa bài học
         </a>
-        <form method="post" asp-action="TogglePublish" class="d-inline">
+        <form method="post" asp-action="TogglePublish" class="d-inline" id="hideOrPublishLessonForm" data-lesson-id="@Model.Id" data-course-id="@Model.CourseId">
             <input type="hidden" name="id" value="@Model.Id" />
             @if (Model.IsPublished)
             {
-                <button type="submit" class="btn btn-secondary">
+                <button type="submit" class="btn btn-secondary btnHideLesson" data-type="0">
                     <i class="fas fa-eye-slash fa-sm text-white-50"></i> Ẩn bài học
                 </button>
             }
             else
             {
-                <button type="submit" class="btn btn-success">
+                <button type="submit" class="btn btn-success" data-type="1">
                     <i class="fas fa-eye fa-sm text-white-50"></i> Xuất bản
                 </button>
             }
         </form>
-        <a href="@Url.Action("Index", new { courseId = Model.CourseId })" class="btn btn-info">
+        <a onclick="showpopup('Quản lý bài học', '@Url.Action("Index", new { courseId = Model.CourseId })'); return false;" class="btn btn-secondary">
             <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
         </a>
-        <button type="button" class="btn btn-danger" onclick="deleteLesson()">
+        <button type="button" class="btn btn-danger" id="deleteLesson" data-lesson-id="@Model.Id" data-course-id="@Model.CourseId">
             <i class="fas fa-trash fa-sm text-white-50"></i> Xóa
         </button>
     </div>
@@ -114,9 +111,6 @@
                 <p class="small">
                     <strong>Giảng viên:</strong> @Model.Course.Instructor.FullName
                 </p>
-                <a href="@Url.Action("Details", "Courses", new { id = Model.CourseId })" class="btn btn-outline-primary btn-sm w-100">
-                    <i class="fas fa-eye me-2"></i>Xem khóa học
-                </a>
             </div>
         </div>
 

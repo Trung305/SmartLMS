@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\js\admin\course-upsert.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
@@ -21,6 +25,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SmartLMS.Infrastructure\SmartLMS.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\images\achievements\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\js\admin\course-upsert.js" />
+    <None Include="wwwroot\js\instructor\course-upsert.js" />
   </ItemGroup>
 
 </Project>

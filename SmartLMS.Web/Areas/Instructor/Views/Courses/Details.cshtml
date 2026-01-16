@@ -1,0 +1,210 @@
+﻿@* @using SmartLMS.Web.Areas.Instructor.Models
+@model InstructorCourseDetailViewModel
+@{
+    ViewData["Title"] = @Model.Title;
+    Layout = "InstructorLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-book-open text-success me-2"></i>@Model.Title</h3>
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Sửa
+        </a>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<!-- Nav Tabs -->
+<ul class="nav nav-tabs mb-4" id="courseTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#info">Thông tin</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#lessons">Bài học</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#quizzes">Bài kiểm tra</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#students">Học viên</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#stats">Thống kê</button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Tab 1: Thông tin -->
+    <div class="tab-pane fade show active" id="info">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img src="@Model.Thumbnail" class="img-fluid rounded" style="max-height: 200px;" alt="Thumbnail">
+                    </div>
+                    <div class="col-md-8">
+                        <h5><strong>Tên khóa:</strong> @Model.Title</h5>
+                        <p><strong>Mô tả:</strong> @Model.Description</p>
+                        <p><strong>Trạng thái:</strong> <span class="badge bg-@(Model.Status == "Published" ? "success" : "secondary")">@Model.Status</span></p>
+                        <p><strong>Thời gian:</strong> @Model.StartDate.ToString("dd/MM/yyyy") → @Model.EndDate.ToString("dd/MM/yyyy")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Bài học -->
+    <div class="tab-pane fade" id="lessons">
+        <div class="d-flex justify-content-between mb-3">
+            <h5>Danh sách bài học</h5>
+            <a asp-controller="Lessons" asp-action="Create" asp-route-courseId="@Model.Id" class="btn btn-sm btn-success">
+                <i class="fas fa-plus"></i> Thêm bài học
+            </a>
+        </div>
+        <div class="list-group">
+            @foreach (var lesson in Model.Lessons)
+            {
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@lesson.Title</strong>
+                        <br><small class="text-muted">@lesson.Duration phút • @lesson.Type</small>
+                    </div>
+                    <div>
+                        <a asp-controller="Lessons" asp-action="Edit" asp-route-id="@lesson.Id" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>
+                        <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Tab 3: Quiz -->
+    <div class="tab-pane fade" id="quizzes">
+        <div class="d-flex justify-content-between mb-3">
+            <h5>Bài kiểm tra</h5>
+            <a asp-controller="Quizzes" asp-action="Create" asp-route-courseId="@Model.Id" class="btn btn-sm btn-success">
+                <i class="fas fa-plus"></i> Tạo quiz
+            </a>
+        </div>
+        <div class="row">
+            @foreach (var quiz in Model.Quizzes)
+            {
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">@quiz.Title</h6>
+                            <p class="card-text">
+                                <small>
+                                    <strong>Loại:</strong> @(quiz.Type == "MC" ? "Trắc nghiệm" : "Tự luận")<br>
+                                    <strong>Câu hỏi:</strong> @quiz.QuestionCount • <strong>Điểm:</strong> @quiz.MaxScore<br>
+                                    <strong>Thời gian:</strong> @quiz.TimeLimit phút
+                                </small>
+                            </p>
+                            <a asp-controller="Quizzes" asp-action="Grade" asp-route-id="@quiz.Id" class="btn btn-sm btn-primary">Chấm điểm</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Tab 4: Học viên -->
+    <div class="tab-pane fade" id="students">
+        <div class="d-flex justify-content-between mb-3">
+            <h5>Học viên đã đăng ký (@Model.Students.Count)</h5>
+            <button class="btn btn-sm btn-outline-success"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                        <th>Ngày tham gia</th>
+                        <th>Tiến độ</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in Model.Students)
+                    {
+                        <tr>
+                            <td>@student.FullName</td>
+                            <td>@student.Email</td>
+                            <td>@student.JoinDate.ToString("dd/MM")</td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" style="width: @student.Progress%">@student.Progress%</div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-@(student.IsActive ? "success" : "secondary")">@(student.IsActive ? "Đang học" : "Tạm dừng")</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab 5: Thống kê -->
+    <div class="tab-pane fade" id="stats">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>@Model.Students.Count</h5>
+                        <p class="text-muted">Học viên</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>@Model.AvgCompletion%</h5>
+                        <p class="text-muted">Hoàn thành TB</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>@Model.AvgQuizScore</h5>
+                        <p class="text-muted">Điểm Quiz TB</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5>@Model.Lessons.Count</h5>
+                        <p class="text-muted">Bài học</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mt-3">
+            <div class="card-body">
+                <canvas id="progressChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        new Chart(document.getElementById('progressChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Đã hoàn thành', 'Chưa hoàn thành'],
+                datasets: [{
+                    data: [@Model.AvgCompletion, (100 - @Model.AvgCompletion)],
+                    backgroundColor: ['#2ecc71', '#e74c3c']
+                }]
+            },
+            options: { responsive: true }
+        });
+    </script>
+} *@

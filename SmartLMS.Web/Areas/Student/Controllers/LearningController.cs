@@ -71,7 +71,13 @@ public class LearningController : Controller
         var enrollment = await _context.Enrollments
             .Where(e => e.StudentId == user.Id && e.CourseId == courseId)
             .Include(e => e.Course)
-                .ThenInclude(c => c.Lessons.OrderBy(l => l.OrderIndex))
+                .ThenInclude(c => c.Category)       
+            .Include(e => e.Course)                 
+                .ThenInclude(c => c.Instructor)     
+            .Include(e => e.Course)                 
+                .ThenInclude(c => c.Lessons
+                    .Where(l => l.IsPublished)      
+                    .OrderBy(l => l.OrderIndex))
             .Include(e => e.LessonProgress)
             .FirstOrDefaultAsync();
 
@@ -81,6 +87,7 @@ public class LearningController : Controller
         }
 
         var lesson = enrollment.Course.Lessons.FirstOrDefault(l => l.Id == lessonId);
+        var lessons = _context.Lessons.Where(e => e.CourseId == courseId).ToList();
         if (lesson == null)
         {
             return NotFound("Bài học không tồn tại.");
@@ -111,49 +118,41 @@ public class LearningController : Controller
             Enrollment = enrollment,
             CurrentLesson = lesson,
             LessonProgress = lessonProgress,
-            NextLesson = enrollment.Course.Lessons
-                .Where(l => l.OrderIndex > lesson.OrderIndex)
-                .OrderBy(l => l.OrderIndex)
-                .FirstOrDefault(),
-            PreviousLesson = enrollment.Course.Lessons
-                .Where(l => l.OrderIndex < lesson.OrderIndex)
-                .OrderByDescending(l => l.OrderIndex)
-                .FirstOrDefault()
+            Lessons = lessons
         };
 
         return View(viewModel);
     }
 
     [HttpPost]
-    public async Task<IActionResult> UpdateProgress(Guid lessonId, int watchedDuration)
+    public async Task<IActionResult> UpdateProgress([FromBody] UpdateProgressDto dto)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
             return Json(new { success = false, message = "Unauthorized" });
         }
-
+        Console.WriteLine($"LessonId: {dto.lessonId}");
+        Console.WriteLine($"UserId: {user.Id}");
         var lessonProgress = await _context.LessonProgress
             .Include(lp => lp.Enrollment)
             .Include(lp => lp.Lesson)
-            .FirstOrDefaultAsync(lp => lp.LessonId == lessonId && lp.Enrollment.StudentId == user.Id);
+            .FirstOrDefaultAsync(lp => lp.LessonId == dto.lessonId && lp.Enrollment.StudentId == user.Id);
 
         if (lessonProgress == null)
         {
             return Json(new { success = false, message = "Lesson progress not found" });
         }
 
-        lessonProgress.WatchedDuration = Math.Max(lessonProgress.WatchedDuration, watchedDuration);
+        lessonProgress.WatchedDuration = Math.Max(lessonProgress.WatchedDuration, dto.watchedDuration);
         lessonProgress.LastAccessDate = DateTime.UtcNow;
 
         // Mark as completed if watched 90% of the video
         var completionThreshold = lessonProgress.Lesson.Duration * 0.9;
-        if (!lessonProgress.IsCompleted && watchedDuration >= completionThreshold)
+        if (!lessonProgress.IsCompleted && dto.watchedDuration >= completionThreshold)
         {
             lessonProgress.IsCompleted = true;
             lessonProgress.CompletedDate = DateTime.UtcNow;
-
-            // Update enrollment progress
             await UpdateEnrollmentProgressAsync(lessonProgress.EnrollmentId);
         }
 
@@ -188,5 +187,10 @@ public class LearningController : Controller
         }
 
         await _context.SaveChangesAsync();
+    }
+    public class UpdateProgressDto
+    {
+        public Guid lessonId { get; set; }
+        public int watchedDuration { get; set; }
     }
 }

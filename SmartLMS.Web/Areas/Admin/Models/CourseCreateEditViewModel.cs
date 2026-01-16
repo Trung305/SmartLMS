@@ -34,11 +34,6 @@ public class CourseCreateEditViewModel
     [Display(Name = "Cấp độ")]
     public CourseLevel Level { get; set; } = CourseLevel.Beginner;
 
-    [Required(ErrorMessage = "Thời lượng ước tính là bắt buộc")]
-    [Range(1, 10000, ErrorMessage = "Thời lượng phải từ 1 đến 10,000 phút")]
-    [Display(Name = "Thời lượng ước tính (phút)")]
-    public int EstimatedDuration { get; set; }
-
     [Required(ErrorMessage = "Danh mục là bắt buộc")]
     [Display(Name = "Danh mục")]
     public int CategoryId { get; set; }
@@ -52,7 +47,15 @@ public class CourseCreateEditViewModel
 
     [Display(Name = "Bạn sẽ học được gì")]
     public string? WhatYouWillLearn { get; set; }
+    [Required(ErrorMessage = "Vui lòng chọn ngày bắt đầu khóa học")]
+    [DataType(DataType.Date)]
+    [Display(Name = "Ngày bắt đầu")]
+    public DateTime StartDate { get; set; }  // Không nullable vì bắt buộc
 
+    [DataType(DataType.Date)]
+    [Display(Name = "Ngày kết thúc")]
+    public DateTime? EndDate { get; set; }
+    public IFormFile? ThumbnailFile { get; set; }
     public string? CurrentThumbnail { get; set; }
 
     // For dropdowns

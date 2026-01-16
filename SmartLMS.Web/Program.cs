@@ -1,7 +1,12 @@
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SmartLMS.Core.Entities;
+using SmartLMS.Core.Interfaces.Services;
+using SmartLMS.Core.Services;
 using SmartLMS.Infrastructure.Data;
+using SmartLMS.Infrastructure.Services;
+using SmartLMS.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,10 +47,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     options.SlidingExpiration = true;
 });
-
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IQuizzesService, QuizzesService>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+builder.Services.AddScoped<IFileStoragePathProvider, WebFileStoragePathProvider>();
 // Add MVC
 builder.Services.AddControllersWithViews();
-
 // Add SignalR
 builder.Services.AddSignalR();
 

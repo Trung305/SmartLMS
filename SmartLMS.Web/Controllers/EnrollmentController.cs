@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartLMS.Core.Entities;
 using SmartLMS.Core.Enums;
+using SmartLMS.Core.Interfaces.Services;
 using SmartLMS.Infrastructure.Data;
+using System.Security.Claims;
 
 namespace SmartLMS.Web.Controllers;
 
@@ -14,14 +16,17 @@ public class EnrollmentController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<EnrollmentController> _logger;
+    private readonly IEnrollmentService _enrollmentService;
 
     public EnrollmentController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
+        IEnrollmentService enrollmentService,
         ILogger<EnrollmentController> logger)
     {
         _context = context;
         _userManager = userManager;
+        _enrollmentService = enrollmentService;
         _logger = logger;
     }
 
@@ -35,66 +40,17 @@ public class EnrollmentController : Controller
             return Challenge();
         }
 
-        // Kiểm tra khóa học có tồn tại và được publish không
-        var course = await _context.Courses
-            .Include(c => c.Instructor)
-            .FirstOrDefaultAsync(c => c.Id == courseId);
+        var result = await _enrollmentService.EnrollAsync(user.Id, courseId);
 
-        if (course == null)
+        if (result.success)
         {
-            TempData["ErrorMessage"] = "Khóa học không tồn tại.";
-            return RedirectToAction("Index", "Courses");
+            TempData["SuccessMessage"] = result.message;
+            return RedirectToAction("MyCourses");
         }
-
-        if (!course.IsPublished)
+        else
         {
-            TempData["ErrorMessage"] = "Khóa học chưa được xuất bản.";
-            return RedirectToAction("Details", "Courses", new { id = courseId });
-        }
-
-        // Kiểm tra đã đăng ký chưa
-        var existingEnrollment = await _context.Enrollments
-            .FirstOrDefaultAsync(e => e.StudentId == user.Id && e.CourseId == courseId);
-
-        if (existingEnrollment != null)
-        {
-            TempData["InfoMessage"] = "Bạn đã đăng ký khóa học này rồi.";
-            return RedirectToAction("Course", "Learning", new { area = "Student", id = courseId });
-        }
-
-        // Không cho instructor đăng ký khóa học của chính mình
-        if (course.InstructorId == user.Id)
-        {
-            TempData["ErrorMessage"] = "Bạn không thể đăng ký khóa học của chính mình.";
-            return RedirectToAction("Details", "Courses", new { id = courseId });
-        }
-
-        // Tạo enrollment mới
-        var enrollment = new Enrollment
-        {
-            StudentId = user.Id,
-            CourseId = courseId,
-            EnrollmentDate = DateTime.UtcNow,
-            Status = EnrollmentStatus.Active
-        };
-
-        _context.Enrollments.Add(enrollment);
-
-        try
-        {
-            await _context.SaveChangesAsync();
-            _logger.LogInformation("User {UserId} enrolled in course {CourseId}", user.Id, courseId);
-
-            TempData["SuccessMessage"] = "Đăng ký khóa học thành công! Chào mừng bạn đến với khóa học.";
-
-            // Chuyển hướng đến trang học
-            return RedirectToAction("Course", "Learning", new { area = "Student", id = courseId });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error enrolling user {UserId} in course {CourseId}", user.Id, courseId);
-            TempData["ErrorMessage"] = "Có lỗi xảy ra khi đăng ký khóa học. Vui lòng thử lại.";
-            return RedirectToAction("Details", "Courses", new { id = courseId });
+            TempData["ErrorMessage"] = result.message;
+            return RedirectToAction("Details", "Course", new { id = courseId });
         }
     }
 
@@ -143,6 +99,7 @@ public class EnrollmentController : Controller
         }
     }
 
+
     public async Task<IActionResult> CheckEnrollment(Guid courseId)
     {
         if (!User.Identity?.IsAuthenticated == true)
@@ -165,9 +122,21 @@ public class EnrollmentController : Controller
         return Json(new
         {
             isEnrolled = enrollment != null && enrollment.Status == EnrollmentStatus.Active,
-            canEnroll = course != null && course.IsPublished && course.InstructorId != user.Id,
+            canEnroll = course != null && course.Status == CourseStatus.Published && course.InstructorId != user.Id,
             progress = enrollment?.Progress ?? 0,
             enrollmentDate = enrollment?.EnrollmentDate.ToString("dd/MM/yyyy")
         });
+    }
+
+    public async Task<IActionResult> MyCourses()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
+        var enrollments = await _enrollmentService.GetUserEnrollmentsAsync(user.Id);
+
+        return View(enrollments);
     }
 }

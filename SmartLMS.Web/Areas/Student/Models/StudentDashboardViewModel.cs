@@ -19,6 +19,5 @@ public class LessonViewModel
     public Enrollment Enrollment { get; set; } = new();
     public Lesson CurrentLesson { get; set; } = new();
     public LessonProgress LessonProgress { get; set; } = new();
-    public Lesson? NextLesson { get; set; }
-    public Lesson? PreviousLesson { get; set; }
+    public List<Lesson> Lessons { get; set; } = new();
 }

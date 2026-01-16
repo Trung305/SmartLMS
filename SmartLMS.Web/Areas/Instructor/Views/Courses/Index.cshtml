@@ -1,0 +1,463 @@
+﻿@model SmartLMS.Web.Areas.Instructor.Models.InstructorCourseViewModel
+
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0">
+        <i class="fas fa-book-open text-success me-2"></i>
+        Khóa học của tôi
+    </h5>
+
+    <a href="#" class="btn btn-create"
+       onclick="showpopup('Thêm khóa học mới', '@Url.Action("Upsert")'); return false;">
+        <i class="fas fa-plus-circle"></i>Tạo mới
+    </a>
+</div>
+<form id="filter-form" class="mb-4">
+    <div class="row g-3 align-items-end">
+        <!-- Tìm kiếm -->
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" name="searchQuery" value="@Model.SearchQuery"
+                       class="form-control" placeholder="Tìm tên khóa học..." />
+            </div>
+        </div>
+
+        <!-- Danh mục -->
+        <div class="col-md-2">
+            <select name="selectedCategory" class="form-select"
+                    asp-items="@(new SelectList(Model.Categories, "Id", "Name", Model.SelectedCategory))">
+                <option value="">Tất cả danh mục</option>
+            </select>
+        </div>
+
+        <!-- Trạng thái -->
+        <div class="col-md-2">
+            <select name="selectedStatus" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Published" selected="@(Model.SelectedStatus == 2)">Đang mở</option>
+                <option value="Draft" selected="@(Model.SelectedStatus == 1)">Bản nháp</option>
+                <option value="Pending" selected="@(Model.SelectedStatus == 3)">Chờ duyệt</option>
+                <option value="Archived" selected="@(Model.SelectedStatus == 4)">Lưu trữ</option>
+                <option value="Archived" selected="@(Model.SelectedStatus == 5)">Tạm ngưng</option>
+            </select>
+        </div>
+
+        <!-- Nút Lọc -->
+        <div class="col-md-3">
+            <button type="button" class="btn btn-primary w-100">
+                <i class="fas fa-filter"></i> Lọc
+            </button>
+        </div>
+    </div>
+</form>
+
+<div id="myGrid" class="ag-theme-alpine"></div>
+
+</div>
+<!-- Loading -->
+<div id="loading" class="htmx-indicator text-center py-4">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Đang tải...</span>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/instructor/course-upsert.js"></script>
+    <script>
+        window.getFilterParams = function () {
+            return {
+                searchQuery: searchInput.value,
+                selectedCategory: categorySelect.value,
+                selectedStatus: statusSelect.value
+            };
+        };
+
+        window.resetAndLoadData = function (params) {
+            if (isLoading) return;
+
+            isLoading = true;
+            allData = [];
+            currentLoadedCount = 0;
+            currentFilters = params;
+
+            loadCoursesFromServer(params, 0, BATCH_SIZE)
+                .then(response => {
+                    const data = response.data || response;
+                    totalCount = response.totalCount || data.length;
+
+                    allData = data.items;
+                    currentLoadedCount = data.items.length;
+
+                    updateGrid();
+                    gridApi.paginationSetPageSize(PAGE_SIZE);
+
+                    isLoading = false;
+                })
+                .catch(err => {
+                    console.error("Load error:", err);
+                    updateGrid();
+                    isLoading = false;
+                });
+        };
+        window.deleteCourse = function (id) {
+            Swal.fire({
+                title: 'Cảnh báo',
+                text: "Bạn có chắc muốn xóa khóa học này không?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: '<i class="fas fa-delete"></i> Xóa',
+                cancelButtonText: '<i class="fas fa-times"></i> Hủy'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                fetch(`/Instructor/Courses/Delete/${id}`, {
+                    method: "DELETE"
+                })
+                .then(res => res.json()) 
+                .then(data => {
+                    if (!data.success) {
+                        notion.error(data.message || "Không thể xóa khóa học!", 4000);
+                        return;
+                    }
+                    notion.success("Xóa thành công!", 4000);
+                    window.resetAndLoadData(window.getFilterParams());
+                })
+                .catch(err => {
+                    console.error(err);
+                    notion.error("Lỗi hệ thống! Không thể xóa khóa học.", 4000);
+                });
+            });
+        };
+        const gridDiv = document.querySelector('#myGrid');
+        const filterForm = document.getElementById('filter-form');
+        const searchInput = filterForm.querySelector('input[name="searchQuery"]');
+        const categorySelect = filterForm.querySelector('select[name="selectedCategory"]');
+        const statusSelect = filterForm.querySelector('select[name="selectedStatus"]');
+        const filterButton = filterForm.querySelector('button');
+
+        const statusMap = [
+            { value: 1, label: "Đang lưu", cls: "secondary" },
+            { value: 2, label: "Chờ duyệt", cls: "warning" },
+            { value: 3, label: "Xuất bản", cls: "success" },
+            { value: 4, label: "Lưu trữ", cls: "dark" },
+        ];
+        const courseLevel = [
+            { value: 1, label: "Mới bắt đầu", cls: "success" },
+            { value: 2, label: "Trung cấp", cls: "warning" },
+            { value: 3, label: "Nâng cao", cls: "dark" },
+        ];
+        let gridApi;
+        let allData = [];
+        let currentLoadedCount = 0;
+        let totalCount = 0;
+        const BATCH_SIZE = 10;
+        const PAGE_SIZE = 5;
+        let isLoading = false;
+        let currentFilters = {};
+
+        const gridOptions = {
+            rowData: [],
+            columnDefs: [
+                {
+                    headerName: "Tên khóa học",
+                    field: "title",
+                    minWidth: 320,
+                    flex: 1,
+                    cellStyle: {
+                        display: 'flex',
+                        alignItems: 'center',
+                    },
+                    cellRenderer: function(params) {
+                        const { isFree, price, thumbnail, id, title, level } = params.data;
+                        const levelCourse = courseLevel.find(x => x.value == level) || { label: level };
+                        const imageHtml = thumbnail
+                            ? `<img src="${thumbnail}"
+                                    alt="${title}"
+                                    class="rounded"
+                                    style="width:50px; height:50px; object-fit:cover; flex-shrink:0;">`
+                            : `<div class="bg-light rounded d-flex align-items-center justify-content-center"
+                                    style="width:50px; height:50px; flex-shrink:0;">
+                                 <i class="fas fa-image text-muted fs-4"></i>
+                               </div>
+                            `;
+                        return `
+                            <div style="display:flex; align-items:center; gap:14px; width:100%; height:100%;">
+                                ${imageHtml}
+
+                                <div style="min-width:0; flex:1;">
+                                    <div style="font-weight:600; font-size:15px; line-height:1.35; margin-bottom:5px;
+                                                overflow:hidden; text-overflow:ellipsis; display:-webkit-box;
+                                                -webkit-line-clamp:2; -webkit-box-orient:vertical; max-height:42px;">
+                                        <a onclick="showpopup('Sửa khóa học', '/Instructor/Courses/Upsert/${params.value}', function() { window.resetAndLoadData(getFilterParams()); }); return false;"
+                                            class="text-decoration-none text-dark">
+                                            ${title}
+                                        </a>
+                                    </div>
+
+                                    <div style="margin-top:7px; line-height:1;">
+                                        ${isFree
+                                            ? '<span class="badge bg-success text-white">Miễn phí</span>'
+                                            : `<span class="badge bg-primary text-white">${price.toLocaleString('vi-VN')}</span>`
+                                        }
+                                        <span class="badge bg-light text-dark border ms-1">${levelCourse.label}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                },
+                {
+                    field: "categoryName",
+                    headerName: "Loại",
+                    flex: 1,
+                    cellStyle: {
+                        display: 'flex',
+                        alignItems: 'center',
+                    },
+                    cellRenderer: function(params) {
+                        return '<span class="badge bg-primary text-white">' + params.value + '</span>';
+                    }
+                },
+                {
+                    headerName: "Trạng thái",
+                    field: "status",
+                    flex: 1,
+                    cellStyle: {
+                        display: 'flex',
+                        alignItems: 'center',
+                    },
+                    cellRenderer: function(params) {
+                        var s = statusMap.find(function(item) { return item.value == params.value; });
+                        if (!s) s = { label: params.value, cls: 'info' };
+                        return '<span class="badge bg-' + s.cls + '">' + s.label + '</span>';
+                    }
+                },
+                {
+                    headerName: "Ngày tạo",
+                    field: "createdDate",
+                    flex: 1,
+                    cellStyle: {
+                        display: 'flex',
+                        alignItems: 'center',
+                    },
+                    valueFormatter: function(params) {
+                        return new Date(params.value).toLocaleDateString("vi-VN");
+                    }
+                },
+                {
+                    headerName: "Hành động",
+                    field: "id",
+                    flex: 1,
+                    cellStyle: {
+                        display: 'flex',
+                        alignItems: 'center',
+                    },
+                    cellRenderer: function (params) {
+                        const id = params.data.id;
+                        const status = params.data.status;
+
+                        let html = `
+                            <button href="#" title="Sửa" style="margin-right: 15px"
+                                onclick="showpopup('Sửa khóa học', '/Instructor/Courses/Upsert/${params.value}', function() { window.resetAndLoadData(getFilterParams()); }); return false;"
+                                class="btn btn-sm btn-outline-warning rounded-circle">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        `;
+                        if (status === 1 || status === 2) {
+                            html += `
+                                <button class="btn btn-sm btn-outline-danger rounded-circle" onclick="window.deleteCourse('${id}')" title="Xóa khóa học">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            `;
+                        }
+                        return html;
+                    }
+                }
+            ],
+            defaultColDef: {
+                sortable: true,
+                resizable: true
+            },
+            getRowHeight: () => 'auto',
+            rowHeight: 80,
+            domLayout: 'autoHeight',
+            suppressRowTransform: true,
+            animateRows: false,
+            navigateToNextCell: () => {},   
+            postProcessPopup: () => {},
+            pagination: true,
+            paginationPageSize: PAGE_SIZE,
+            paginationAutoPageSize: false,
+            paginationPageSizeSelector: false,
+            localeText: {
+                page: "Trang",
+                more: "Thêm",
+                to: "đến",
+                of: "của",
+                next: "Trang kế",
+                last: "Trang cuối",
+                first: "Trang đầu",
+                previous: "Trang trước",
+                loadingOoo: "Đang tải...",
+                selectAll: "Chọn tất cả",
+                searchOoo: "Tìm...",
+                blanks: "Trống",
+                noRowsToShow: "Không có dữ liệu",
+                pinColumn: "Ghim cột",
+                valueAggregation: "Tổng hợp giá trị",
+                autoSizeThisColumn: "Tự động điều chỉnh cột",
+                autoSizeAllColumns: "Tự động điều chỉnh tất cả",
+                groupBy: "Nhóm theo",
+                ungroupBy: "Bỏ nhóm theo",
+                resetColumns: "Đặt lại cột"
+            },
+            onPaginationChanged: function(event) {
+                if (!gridApi) return;
+
+                var currentPage = gridApi.paginationGetCurrentPage();
+                var totalPages = gridApi.paginationGetTotalPages();
+                var itemsNeeded = (currentPage + 1) * PAGE_SIZE;
+
+                if (itemsNeeded >= currentLoadedCount - PAGE_SIZE && currentLoadedCount < totalCount) {
+                    loadMoreData();
+                }
+            },
+            onGridReady: function(params) {
+                gridApi = params.api;
+                params.api.sizeColumnsToFit();
+                hideRowCount();
+            }
+        };
+
+        gridApi = agGrid.createGrid(gridDiv, gridOptions);
+
+
+        window.resetAndLoadData(window.getFilterParams());
+        function hideRowCount() {
+            var style = document.createElement('style');
+            style.innerHTML = `
+                .ag-paging-row-summary-panel {
+                    display: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        function loadCoursesFromServer(params, skip, take, loadAll) {
+            params = params || {};
+            params.skip = skip || 0;
+            params.take = take || BATCH_SIZE;
+
+            if (loadAll) {
+                params.loadAll = true;
+            }
+
+            var query = new URLSearchParams(params).toString();
+
+            return fetch('/Instructor/Courses/GetCourses?' + query)
+                .then(function(res) {
+                    if (!res.ok) throw new Error('HTTP error! status: ' + res.status);
+                    return res.json();
+                });
+        }
+
+        function loadMoreData() {
+            if (isLoading || currentLoadedCount >= totalCount) return;
+
+            isLoading = true;
+
+            loadCoursesFromServer(currentFilters, currentLoadedCount, BATCH_SIZE)
+                .then(function(response) {
+                    var data = response.items || response;
+                    allData = allData.concat(data);
+                    currentLoadedCount = allData.length;
+
+                    updateGrid();
+                    isLoading = false;
+                })
+                .catch(function(err) {
+                    console.error("Lỗi load more:", err);
+                    isLoading = false;
+                });
+        }
+        function loadAllRemaining() {
+            if (isLoading || currentLoadedCount >= totalCount) return;
+
+            isLoading = true;
+            var remaining = totalCount - currentLoadedCount;
+            loadCoursesFromServer(currentFilters, currentLoadedCount, remaining, true)
+                .then(function(response) {
+                    var data = response.data || response;
+
+                    allData = allData.concat(data.items);
+                    currentLoadedCount = allData.length;
+
+                    updateGrid();
+                    isLoading = false;
+                })
+                .catch(function(err) {
+                    console.error("Lỗi load all:", err);
+                    isLoading = false;
+                });
+        }
+            function updateGrid() {
+
+            var displayData = allData.slice();
+
+            var emptyCount = totalCount - displayData.length;
+            for (var i = 0; i < emptyCount; i++) {
+                displayData.push({ _placeholder: true });
+            }
+
+            if (gridApi.updateGridOptions) {
+                gridApi.updateGridOptions({
+                    rowData: displayData,
+                    paginationNumberFormatter: function(params) {
+                        return params.value.toLocaleString();
+                    }
+                });
+            }
+        }
+        setTimeout(function() {
+            var lastButton = document.querySelector('.ag-paging-button[ref="btLast"]');
+            if (lastButton) {
+                lastButton.addEventListener('click', function(e) {
+                    if (currentLoadedCount < totalCount) {
+                        e.stopPropagation();
+                        loadAllRemaining();
+                        setTimeout(function() {
+                            if (gridApi.paginationGoToLastPage) {
+                                gridApi.paginationGoToLastPage();
+                            }
+                        }, 500);
+                    }
+                }, true);
+            }
+        }, 1000);
+
+        filterButton.addEventListener('click', function() {
+            window.resetAndLoadData(window.getFilterParams());
+        });
+
+        searchInput.addEventListener('keyup', function(e) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                window.resetAndLoadData(window.getFilterParams());
+            }
+        });
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            window.resetAndLoadData(window.getFilterParams());
+        });
+        categorySelect.addEventListener('change', function() {
+            window.resetAndLoadData(window.getFilterParams());
+        });
+
+        statusSelect.addEventListener('change', function() {
+            window.resetAndLoadData(window.getFilterParams());
+        });
+       
+    </script>
+
+}

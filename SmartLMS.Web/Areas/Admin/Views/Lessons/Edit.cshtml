@@ -1,7 +1,4 @@
 ﻿@model LessonCreateEditViewModel
-@{
-    ViewData["Title"] = "Chỉnh sửa bài học - " + Model.Title;
-}
 
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <div>
@@ -9,10 +6,11 @@
         <p class="text-muted mb-0">Khóa học: <strong>@Model.CourseName</strong></p>
     </div>
     <div>
-        <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-info">
-            <i class="fas fa-eye fa-sm text-white-50"></i> Xem chi tiết
+        <a onclick="showpopup('Chi tiết bài học', '@Url.Action("Details", new {  id = Model.Id  })'); return false;"
+           class="btn btn-info" title="Xem chi tiết">
+            <i class="fas fa-eye"></i>Xem chi tiết
         </a>
-        <a href="@Url.Action("Index", new { courseId = Model.CourseId })" class="btn btn-secondary">
+        <a onclick="showpopup('Quản lý bài học', '@Url.Action("Index", new { courseId = Model.CourseId })'); return false;" class="btn btn-secondary">
             <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
         </a>
     </div>
@@ -20,7 +18,7 @@
 
 <div class="card shadow mb-4">
     <div class="card-body">
-        <form method="post" enctype="multipart/form-data" asp-action="Edit">
+        <form method="post" enctype="multipart/form-data" asp-action="Edit" id="editLessonForm">
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="CourseId" />
             <input type="hidden" asp-for="CurrentVideoUrl" />
@@ -67,20 +65,12 @@
                             </div>
                         }
 
-                        <input type="file" name="video" class="form-control" accept="video/*" id="videoInput" onchange="previewNewVideo(this)" />
+                        <input type="file" name="video" class="form-control" accept="video/*" id="videoInput" onchange="handleVideoUpload(this)" />
                         <small class="text-muted">
-                            Tải lên video mới để thay thế. Hỗ trợ: MP4, WebM, AVI. Max: 100MB
+                            Tải lên video mới để thay thế. Hỗ trợ: MP4, WebM, AVI. Dung lượng tối đa: 500MB
                         </small>
 
-                        <div id="newVideoPreview" class="mt-3" style="display: none;">
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle me-2"></i>
-                                <strong>Video mới được chọn:</strong>
-                            </div>
-                            <video id="newPreviewPlayer" controls style="max-width: 100%; max-height: 300px;">
-                                <source src="" type="video/mp4">
-                            </video>
-                        </div>
+                        <div id="videoPreview"></div>
                     </div>
                 </div>
 
@@ -100,15 +90,15 @@
                             </div>
 
                             <div class="mb-3">
-                                <label asp-for="Duration" class="form-label"></label>
-                                <div class="input-group">
-                                    <input asp-for="Duration" type="number" class="form-control" min="1" />
-                                    <span class="input-group-text">giây</span>
-                                </div>
+                                <label asp-for="Duration" class="form-label">Thời lượng (giây)</label>
+                                <input asp-for="Duration"
+                                       type="number"
+                                       class="form-control"
+                                       readonly
+                                       placeholder="Tự động lấy khi upload video" />
                                 <span asp-validation-for="Duration" class="text-danger"></span>
                                 <small class="text-muted">
-                                    <i class="fas fa-info-circle"></i>
-                                    Hiện tại: @TimeSpan.FromSeconds(Model.Duration).ToString(@"mm\:ss")
+                                    <i class="fas fa-magic me-1"></i>Tự động cập nhật khi bạn upload video
                                 </small>
                             </div>
 
@@ -207,59 +197,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    <script>
-        function previewNewVideo(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const url = URL.createObjectURL(file);
-
-                $('#newPreviewPlayer').attr('src', url);
-                $('#newVideoPreview').show();
-
-                // Auto-update duration when new video loads
-                const video = document.getElementById('newPreviewPlayer');
-                video.addEventListener('loadedmetadata', function() {
-                    const duration = Math.floor(video.duration);
-                    $('#Duration').val(duration);
-
-                    // Show duration info
-                    const timeStr = Math.floor(duration / 60) + ':' + (duration % 60).toString().padStart(2, '0');
-                    $('.text-muted:contains("Hiện tại")').html(
-                        '<i class="fas fa-check text-success me-1"></i>Video mới: ' + timeStr
-                    );
-                });
-            }
-        }
-
-        // Show file name when selected
-        $('#videoInput').change(function() {
-            const fileName = $(this).val().split('\\').pop();
-            if (fileName) {
-                $(this).next('.text-muted').html(
-                    '<i class="fas fa-check text-success me-1"></i>Đã chọn video mới: <strong>' + fileName + '</strong>'
-                );
-            }
-        });
-
-        // Confirm before leaving if video selected
-        let videoSelected = false;
-        $('#videoInput').change(function() {
-            videoSelected = $(this).val() !== '';
-        });
-
-        $(window).on('beforeunload', function() {
-            if (videoSelected) {
-                return 'Bạn đã chọn video mới nhưng chưa lưu. Bạn có chắc muốn rời khỏi trang?';
-            }
-        });
-
-        $('form').submit(function() {
-            videoSelected = false; // Disable warning when submitting
-        });
-    </script>
-}

@@ -9,7 +9,8 @@ namespace SmartLMS.Core.Enums
     public enum QuestionType
     {
         MultipleChoice = 1, // Trắc nghiệm nhiều lựa chọn
-        TrueFalse = 2,      // Đúng/Sai
-        Essay = 3           // Tự luận
+        OnlyChoice = 2, 
+        TrueFalse = 3,      // Đúng/Sai
+        Essay = 4           // Tự luận
     }
 }

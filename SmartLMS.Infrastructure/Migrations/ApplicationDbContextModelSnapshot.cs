@@ -52,19 +52,22 @@ namespace SmartLMS.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("c9960efc-7705-4281-b6dd-3e45557a6221"),
+                            Id = new Guid("963e29cc-209b-4696-8bb1-f7631f74901e"),
+                            ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
-                            Id = new Guid("321c6a4d-9730-474f-9347-1887a635e90e"),
+                            Id = new Guid("1d0fe904-5392-4f48-ad47-45226f1b319d"),
+                            ConcurrencyStamp = "2",
                             Name = "Instructor",
                             NormalizedName = "INSTRUCTOR"
                         },
                         new
                         {
-                            Id = new Guid("c46143a1-0a49-44a0-bbfb-314a7badb851"),
+                            Id = new Guid("6d9c1299-7e7b-4689-848a-58a0623950f5"),
+                            ConcurrencyStamp = "3",
                             Name = "Student",
                             NormalizedName = "STUDENT"
                         });
@@ -348,7 +351,7 @@ namespace SmartLMS.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedDate = new DateTime(2025, 9, 27, 4, 33, 54, 971, DateTimeKind.Utc).AddTicks(4560),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Các khóa học về lập trình",
                             Icon = "fa-code",
                             IsActive = true,
@@ -357,7 +360,7 @@ namespace SmartLMS.Infrastructure.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedDate = new DateTime(2025, 9, 27, 4, 33, 54, 971, DateTimeKind.Utc).AddTicks(4565),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Các khóa học về thiết kế",
                             Icon = "fa-paint-brush",
                             IsActive = true,
@@ -366,7 +369,7 @@ namespace SmartLMS.Infrastructure.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedDate = new DateTime(2025, 9, 27, 4, 33, 54, 971, DateTimeKind.Utc).AddTicks(4567),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Các khóa học về marketing",
                             Icon = "fa-bullhorn",
                             IsActive = true,
@@ -375,7 +378,7 @@ namespace SmartLMS.Infrastructure.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedDate = new DateTime(2025, 9, 27, 4, 33, 54, 971, DateTimeKind.Utc).AddTicks(4569),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Các khóa học về kinh doanh",
                             Icon = "fa-briefcase",
                             IsActive = true,
@@ -389,28 +392,32 @@ namespace SmartLMS.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("NVARCHAR(MAX)");
 
-                    b.Property<int>("EstimatedDuration")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("InstructorId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsFree")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPublished")
                         .HasColumnType("bit");
 
                     b.Property<int>("Level")
@@ -421,16 +428,28 @@ namespace SmartLMS.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m);
 
-                    b.Property<DateTime?>("PublishedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Requirements")
                         .HasColumnType("NVARCHAR(MAX)");
+
+                    b.Property<DateTime?>("RevisionDeadline")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ShortDescription")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Thumbnail")
                         .HasMaxLength(500)
@@ -441,22 +460,21 @@ namespace SmartLMS.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<DateTime?>("UpdatedDate")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("WhatYouWillLearn")
                         .HasColumnType("NVARCHAR(MAX)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("InstructorId")
                         .HasDatabaseName("IX_Courses_Instructor");
-
-                    b.HasIndex("CategoryId", "IsPublished")
-                        .HasDatabaseName("IX_Courses_Category_Published");
-
-                    b.HasIndex("IsPublished", "CreatedDate")
-                        .HasDatabaseName("IX_Courses_Published_Created");
 
                     b.ToTable("Courses", (string)null);
                 });
@@ -648,6 +666,9 @@ namespace SmartLMS.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTimedQuiz")
                         .HasColumnType("bit");
 
                     b.Property<Guid?>("LessonId")

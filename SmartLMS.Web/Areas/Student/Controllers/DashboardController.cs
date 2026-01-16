@@ -59,7 +59,6 @@ public class DashboardController : Controller
             TotalEnrollments = enrollments.Count,
             CompletedCourses = enrollments.Count(e => e.Progress >= 100),
             InProgressCourses = enrollments.Count(e => e.Progress > 0 && e.Progress < 100),
-            TotalLearningTime = enrollments.Sum(e => e.Course.EstimatedDuration),
             RecentEnrollments = enrollments.Take(6).ToList(),
             RecentActivity = recentActivity,
             OverallProgress = enrollments.Any() ? enrollments.Average(e => e.Progress) : 0

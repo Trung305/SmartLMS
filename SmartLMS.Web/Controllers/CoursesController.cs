@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartLMS.Core.Common;
+using SmartLMS.Core.Enums;
 using SmartLMS.Infrastructure.Data;
 using SmartLMS.Web.Models.ViewModels;
 
@@ -22,7 +23,7 @@ public class CoursesController : Controller
         var pageSize = Constants.DEFAULT_PAGE_SIZE;
 
         var query = _context.Courses
-            .Where(c => c.IsPublished)
+            .Where(c => c.Status == CourseStatus.Published)
             .Include(c => c.Category)
             .Include(c => c.Instructor)
             .AsQueryable();
@@ -54,7 +55,7 @@ public class CoursesController : Controller
 
         // Apply pagination and ordering
         var courses = await query
-            .OrderByDescending(c => c.CreatedDate)
+            .OrderByDescending(c => c.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -110,7 +111,7 @@ public class CoursesController : Controller
         }
 
         var courses = await _context.Courses
-            .Where(c => c.IsPublished &&
+            .Where(c => c.Status == CourseStatus.Published &&
                 (c.Title.Contains(query) || c.Description.Contains(query)))
             .Include(c => c.Category)
             .Include(c => c.Instructor)

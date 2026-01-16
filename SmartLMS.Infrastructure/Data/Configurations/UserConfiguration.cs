@@ -13,10 +13,8 @@ namespace SmartLMS.Infrastructure.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<ApplicationUser> builder)
         {
-            // Bảng tên
             builder.ToTable("Users");
 
-            // Cấu hình các trường
             builder.Property(u => u.FirstName)
                 .HasMaxLength(50)
                 .IsRequired();
@@ -31,7 +29,6 @@ namespace SmartLMS.Infrastructure.Data.Configurations
             builder.Property(u => u.CreatedDate)
                 .HasDefaultValueSql("GETUTCDATE()");
 
-            // Indexes để tăng tốc truy vấn
             builder.HasIndex(u => u.Email)
                 .IsUnique();
 
@@ -40,16 +37,15 @@ namespace SmartLMS.Infrastructure.Data.Configurations
 
             builder.HasIndex(u => u.CreatedDate);
 
-            // Quan hệ với các bảng khác
             builder.HasMany(u => u.CreatedCourses)
                 .WithOne(c => c.Instructor)
                 .HasForeignKey(c => c.InstructorId)
-                .OnDelete(DeleteBehavior.Restrict); // Không xóa user nếu còn courses
+                .OnDelete(DeleteBehavior.Restrict); 
 
             builder.HasMany(u => u.Enrollments)
                 .WithOne(e => e.Student)
                 .HasForeignKey(e => e.StudentId)
-                .OnDelete(DeleteBehavior.Cascade); // Xóa user thì xóa luôn enrollments
+                .OnDelete(DeleteBehavior.Cascade); 
         }
     }
 }

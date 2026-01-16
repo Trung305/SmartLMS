@@ -35,7 +35,7 @@ namespace SmartLMS.Infrastructure.Data.Configurations
                 .HasDefaultValue(0);
 
             builder.Property(c => c.Level)
-                .HasConversion<int>(); // Convert enum to int
+                .HasConversion<int>();
 
             builder.Property(c => c.Requirements)
                 .HasColumnType("NVARCHAR(MAX)");
@@ -43,26 +43,18 @@ namespace SmartLMS.Infrastructure.Data.Configurations
             builder.Property(c => c.WhatYouWillLearn)
                 .HasColumnType("NVARCHAR(MAX)");
 
-            builder.Property(c => c.CreatedDate)
-                .HasDefaultValueSql("GETUTCDATE()");
-
-            // Indexes quan trọng cho performance
-            builder.HasIndex(c => new { c.CategoryId, c.IsPublished })
-                .HasDatabaseName("IX_Courses_Category_Published");
+            builder.Property(e => e.Status)
+                .HasConversion<int>();
 
             builder.HasIndex(c => c.InstructorId)
                 .HasDatabaseName("IX_Courses_Instructor");
 
-            builder.HasIndex(c => new { c.IsPublished, c.CreatedDate })
-                .HasDatabaseName("IX_Courses_Published_Created");
 
-            // Quan hệ với Lesson
             builder.HasMany(c => c.Lessons)
                 .WithOne(l => l.Course)
                 .HasForeignKey(l => l.CourseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Quan hệ với Quiz
             builder.HasMany(c => c.Quizzes)
                 .WithOne(q => q.Course)
                 .HasForeignKey(q => q.CourseId)

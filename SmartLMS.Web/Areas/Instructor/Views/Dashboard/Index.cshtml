@@ -1,0 +1,168 @@
+﻿@using SmartLMS.Web.Areas.Instructor.Models
+@model InstructorDashboardViewModel
+@{
+    ViewData["Title"] = "Quản trị giảng viên";
+    Layout = "_InstructorLayout";
+}
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="stats-icon bg-primary text-white">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1 text-muted">Khóa học đang dạy</h5>
+                    <h3 class="mb-0 fw-bold">8</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="stats-icon bg-success text-white">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1 text-muted">Tổng học viên</h5>
+                    <h3 class="mb-0 fw-bold">342</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="stats-icon bg-warning text-white">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1 text-muted">Quiz cần chấm</h5>
+                    <h3 class="mb-0 fw-bold">12</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="stats-icon bg-info text-white">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1 text-muted">Hoàn thành TB</h5>
+                    <h3 class="mb-0 fw-bold">68%</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart + Tasks -->
+<div class="row g-4">
+    <!-- Progress Chart -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar text-primary"></i> Tiến độ học viên
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="progressChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Tasks -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks text-warning"></i> Việc cần làm hôm nay
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                    <div>
+                        <i class="fas fa-clipboard-check text-warning me-2"></i>
+                        <strong>2 Quiz cần chấm</strong>
+                        <br><small class="text-muted">45 bài nộp • Hạn: 23:59</small>
+                    </div>
+                    <a asp-area="Teacher" asp-controller="Quizzes" asp-action="Grade" class="btn btn-sm btn-outline-warning">
+                        Chấm ngay
+                    </a>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <i class="fas fa-bell text-danger me-2"></i>
+                        <strong>1 khóa học sắp kết thúc</strong>
+                        <br><small class="text-muted">HTML Cơ Bản • 3 ngày nữa</small>
+                    </div>
+                    <a asp-area="Teacher" asp-controller="Courses" asp-action="Details" asp-route-id="1" class="btn btn-sm btn-outline-danger">
+                        Xem
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Biểu đồ tiến độ học viên
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['HTML', 'CSS', 'JS Cơ bản', 'JS Nâng cao'],
+                datasets: [{
+                    label: 'Hoàn thành (%)',
+                    data: [85, 72, 65, 58],
+                    backgroundColor: 'rgba(67, 97, 238, 0.8)',
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { stepSize: 20 }
+                    }
+                }
+            }
+        });
+    </script>
+
+    <style>
+        .stats-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+    </style>
+}

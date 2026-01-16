@@ -13,10 +13,12 @@ namespace SmartLMS.Core.Entities
         public Guid StudentId { get; set; }
         public Guid CourseId { get; set; }
         public DateTime EnrollmentDate { get; set; } = DateTime.UtcNow;
-        public DateTime? CompletionDate { get; set; }           // Ngày hoàn thành khóa học
-        public decimal Progress { get; set; } = 0;              // Tiến độ (0-100%)
+       // public bool IsCompleted { get; set; } = false;
+        //public DateTime LastAccessedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CompletionDate { get; set; }           
+        public decimal Progress { get; set; } = 0;              
         public EnrollmentStatus Status { get; set; } = EnrollmentStatus.Active;
-        public decimal? FinalScore { get; set; }                // Điểm cuối khóa
+        public decimal? FinalScore { get; set; }                
 
         // Navigation properties
         public ApplicationUser Student { get; set; } = null!;
@@ -27,4 +29,5 @@ namespace SmartLMS.Core.Entities
         public bool IsCompleted => Status == EnrollmentStatus.Completed && CompletionDate.HasValue;
         public int DaysEnrolled => (DateTime.UtcNow - EnrollmentDate).Days;
     }
+
 }

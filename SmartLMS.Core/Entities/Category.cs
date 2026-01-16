@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SmartLMS.Core.Entities
@@ -18,7 +19,9 @@ namespace SmartLMS.Core.Entities
 
         // Navigation properties
         public Category? ParentCategory { get; set; }                    // Danh mục cha
+        [JsonIgnore]
         public ICollection<Category> SubCategories { get; set; } = new List<Category>(); // Danh mục con
+        [JsonIgnore]
         public ICollection<Course> Courses { get; set; } = new List<Course>();          // Khóa học trong danh mục
     }
 }

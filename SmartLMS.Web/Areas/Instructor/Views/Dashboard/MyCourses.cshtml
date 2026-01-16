@@ -1,0 +1,164 @@
+﻿
+@model StudentCoursesViewModel
+@{
+    ViewData["Title"] = "Khóa học của tôi";
+}
+
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="fw-bold">
+                <i class="bi bi-book-fill text-primary"></i> Khóa học của tôi
+            </h2>
+            <p class="text-muted">Quản lý và tiếp tục học các khóa học đã đăng ký</p>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model.Enrollments.TotalCount ==0 )
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <h4 class="mt-3">Chưa có khóa học nào</h4>
+            <p class="text-muted">Khám phá và đăng ký các khóa học thú vị ngay!</p>
+            <a href="@Url.Action("Index", "Course")" class="btn btn-primary">
+                <i class="bi bi-search"></i> Khám phá khóa học
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var enrollment in Model.Enrollments.Items)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <img src="@(enrollment.Course.Thumbnail ?? "/images/default-course.jpg")"
+                             class="card-img-top"
+                             alt="@enrollment.Course.Title"
+                             style="height: 200px; object-fit: cover;">
+
+                        <div class="card-body d-flex flex-column">
+                            <span class="badge bg-primary mb-2 align-self-start">
+                                @enrollment.Course.Category?.Name
+                            </span>
+
+                            <h5 class="card-title">@enrollment.Course.Title</h5>
+
+                            <p class="card-text text-muted small">
+                                <i class="bi bi-person"></i> @enrollment.Course.Instructor?.FullName
+                            </p>
+
+                            <!-- Progress Bar -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="text-muted">Tiến độ</small>
+                                    <small class="fw-bold">@enrollment.Progress.ToString("0")%</small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success"
+                                         role="progressbar"
+                                         style="width: @enrollment.Progress%"
+                                         aria-valuenow="@enrollment.Progress"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto">
+                                @if (enrollment.IsCompleted)
+                                {
+                                    <div class="alert alert-success py-2 mb-2">
+                                        <i class="bi bi-check-circle-fill"></i> Đã hoàn thành
+                                        <small class="d-block">@enrollment.CompletionDate?.ToString("dd/MM/yyyy")</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <small class="text-muted d-block mb-2">
+                                        <i class="bi bi-clock"></i>
+                                        Truy cập lần cuối:
+                                        @(enrollment.CompletionDate?.ToString("dd/MM/yyyy") ?? "Chưa bắt đầu")
+                                    </small>
+                                }
+
+                                <div class="d-grid gap-2">
+                                    <a href="@Url.Action("Continue", "Enrollment", new { courseId = enrollment.CourseId })"
+                                       class="btn btn-primary">
+                                        <i class="bi bi-play-circle"></i>
+                                        @(enrollment.Progress > 0 ? "Tiếp tục học" : "Bắt đầu học")
+                                    </a>
+
+                                    <button type="button"
+                                            class="btn btn-outline-danger btn-sm"
+                                            onclick="confirmUnenroll(@enrollment.CourseId, '@enrollment.Course.Title')">
+                                        <i class="bi bi-x-circle"></i> Hủy đăng ký
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-light">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar-check"></i>
+                                Đăng ký: @* @enrollment.EnrolledDate.ToString("dd/MM/yyyy") *@
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Unenroll Form (Hidden) -->
+<form id="unenrollForm" method="post" asp-action="Unenroll" asp-controller="Enrollment">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="courseId" id="unenrollCourseId" />
+</form>
+
+@section Scripts {
+    <script>
+        function confirmUnenroll(courseId, courseTitle) {
+            if (confirm(`Bạn có chắc muốn hủy đăng ký khóa học "${courseTitle}"?\n\nTiến độ học tập của bạn sẽ được lưu lại.`)) {
+                document.getElementById('unenrollCourseId').value = courseId;
+                document.getElementById('unenrollForm').submit();
+            }
+        }
+    </script>
+}
+
+<style>
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
+
+        .hover-shadow:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
+
+    .card-title {
+        min-height: 50px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>

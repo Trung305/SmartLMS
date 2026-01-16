@@ -17,7 +17,6 @@ namespace SmartLMS.Infrastructure.Data
         {
         }
 
-        // DbSets - đại diện cho các bảng trong database
         public DbSet<Course> Courses { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Lesson> Lessons { get; set; }
@@ -32,18 +31,15 @@ namespace SmartLMS.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
-            // Áp dụng tất cả configurations
             builder.ApplyConfiguration(new UserConfiguration());
             builder.ApplyConfiguration(new CategoryConfiguration());
             builder.ApplyConfiguration(new CourseConfiguration());
             builder.ApplyConfiguration(new EnrollmentConfiguration());
 
-            // Cấu hình các bảng còn lại trực tiếp
             ConfigureLessonEntity(builder);
             ConfigureLessonProgressEntity(builder);
             ConfigureQuizEntities(builder);
 
-            // Seed data ban đầu
             SeedDefaultData(builder);
         }
 
@@ -66,7 +62,6 @@ namespace SmartLMS.Infrastructure.Data
                 entity.Property(l => l.CreatedDate)
                     .HasDefaultValueSql("GETUTCDATE()");
 
-                // Index for ordering lessons in course
                 entity.HasIndex(l => new { l.CourseId, l.OrderIndex })
                     .HasDatabaseName("IX_Lessons_Course_Order");
             });
@@ -81,31 +76,27 @@ namespace SmartLMS.Infrastructure.Data
                 entity.Property(lp => lp.LastAccessDate)
                     .HasDefaultValueSql("GETUTCDATE()");
 
-                // Unique constraint: 1 enrollment chỉ có 1 progress per lesson
                 entity.HasIndex(lp => new { lp.EnrollmentId, lp.LessonId })
                     .IsUnique()
                     .HasDatabaseName("IX_LessonProgress_Enrollment_Lesson_Unique");
 
-                // Index for completion queries
                 entity.HasIndex(lp => new { lp.EnrollmentId, lp.IsCompleted })
                     .HasDatabaseName("IX_LessonProgress_Completion");
 
-                // QUAN TRỌNG: Đây là nơi fix lỗi
                 entity.HasOne(lp => lp.Enrollment)
                     .WithMany(e => e.LessonProgress)
                     .HasForeignKey(lp => lp.EnrollmentId)
-                    .OnDelete(DeleteBehavior.Cascade); // CASCADE cho Enrollment
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(lp => lp.Lesson)
                     .WithMany(l => l.LessonProgress)
                     .HasForeignKey(lp => lp.LessonId)
-                    .OnDelete(DeleteBehavior.Restrict); // RESTRICT cho Lesson ← FIX TẠI ĐÂY
+                    .OnDelete(DeleteBehavior.Restrict); 
             });
         }
 
         private void ConfigureQuizEntities(ModelBuilder builder)
         {
-            // Quiz configuration
             builder.Entity<Quiz>(entity =>
             {
                 entity.ToTable("Quizzes");
@@ -123,7 +114,6 @@ namespace SmartLMS.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Question configuration
             builder.Entity<Question>(entity =>
             {
                 entity.ToTable("Questions");
@@ -144,7 +134,6 @@ namespace SmartLMS.Infrastructure.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Answer configuration
             builder.Entity<Answer>(entity =>
             {
                 entity.ToTable("Answers");
@@ -157,7 +146,6 @@ namespace SmartLMS.Infrastructure.Data
                     .HasDatabaseName("IX_Answers_Question_Order");
             });
 
-            // QuizAttempt configuration
             builder.Entity<QuizAttempt>(entity =>
             {
                 entity.ToTable("QuizAttempts");
@@ -181,22 +169,20 @@ namespace SmartLMS.Infrastructure.Data
 
         private void SeedDefaultData(ModelBuilder builder)
         {
-            // Seed Roles
             var roles = new[]
             {
-            new IdentityRole<Guid> { Id = Guid.NewGuid(), Name = "Admin", NormalizedName = "ADMIN" },
-            new IdentityRole<Guid> { Id = Guid.NewGuid(), Name = "Instructor", NormalizedName = "INSTRUCTOR" },
-            new IdentityRole<Guid> { Id = Guid.NewGuid(), Name = "Student", NormalizedName = "STUDENT" }
+            new IdentityRole<Guid> { Id = new Guid("963E29CC-209B-4696-8BB1-F7631F74901E"), Name = "Admin", NormalizedName = "ADMIN", ConcurrencyStamp = "1"  },
+            new IdentityRole<Guid> { Id = new Guid("1D0FE904-5392-4F48-AD47-45226F1B319D"), Name = "Instructor", NormalizedName = "INSTRUCTOR", ConcurrencyStamp = "2" },
+            new IdentityRole<Guid> { Id = new Guid("6D9C1299-7E7B-4689-848A-58A0623950F5"), Name = "Student", NormalizedName = "STUDENT", ConcurrencyStamp = "3" }
         };
             builder.Entity<IdentityRole<Guid>>().HasData(roles);
 
-            // Seed Categories
             var categories = new[]
             {
-            new Category { Id = 1, Name = "Lập trình", Description = "Các khóa học về lập trình", Icon = "fa-code" },
-            new Category { Id = 2, Name = "Thiết kế", Description = "Các khóa học về thiết kế", Icon = "fa-paint-brush" },
-            new Category { Id = 3, Name = "Marketing", Description = "Các khóa học về marketing", Icon = "fa-bullhorn" },
-            new Category { Id = 4, Name = "Kinh doanh", Description = "Các khóa học về kinh doanh", Icon = "fa-briefcase" }
+            new Category { Id = 1, Name = "Lập trình", Description = "Các khóa học về lập trình", Icon = "fa-code" , CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new Category { Id = 2, Name = "Thiết kế", Description = "Các khóa học về thiết kế", Icon = "fa-paint-brush" ,CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new Category { Id = 3, Name = "Marketing", Description = "Các khóa học về marketing", Icon = "fa-bullhorn" ,CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+            new Category { Id = 4, Name = "Kinh doanh", Description = "Các khóa học về kinh doanh", Icon = "fa-briefcase",CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)  }
         };
             builder.Entity<Category>().HasData(categories);
         }
